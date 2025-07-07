@@ -1,0 +1,31 @@
+{
+	"name": "TableProgressTracking",
+	"author": [
+		"Telepedia Ltd."
+	],
+	"url": "https://www.mediawiki.org/wiki/Extension:TableProgressTracking",
+	"descriptionmsg": "tableprogresstracking-desc",
+	"license-name": "Apache-2.0",
+	"type": "other",
+	"version": "1.0.0",
+	"requires": {
+		"MediaWiki": ">= 1.43.0"
+	},
+	"MessagesDirs": {
+		"TableProgressTracking": [
+			"i18n"
+		]
+	},
+	"Hooks": {
+		"ParserFirstCallInit": "main"
+	},
+	"HookHandlers": {
+        "main": {
+            "class": "Telepedia\\Extensions\\TableProgressTracking\\Hooks"
+        }
+    },
+    "AutoloadNamespaces": {
+        "Telepedia\\Extensions\\TableProgressTracking\\": "includes/"
+    },
+	"manifest_version": 2
+}
