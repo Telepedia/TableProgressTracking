@@ -26,7 +26,7 @@ class TableGenerator {
 		OutputPage::setupOOUI();
 
 		// Switch this to using codex icons eventually to avoid the FOUC on the check icon
-		$parser->getOutput()->addModules( [ 'oojs-ui-core', 'oojs-ui.styles.icons-editing-core' ] );
+		$parser->getOutput()->addModuleStyles( [ 'ext.tableProgressTracking.styles' ] );
 
 		try {
 			if ( empty( $input ) ) {

@@ -16,6 +16,22 @@
 			"i18n"
 		]
 	},
+	"ResourceFileModulePaths": {
+		"localBasePath": "resources",
+		"remoteExtPath": ""
+	},
+	"ResourceModules": {
+		"ext.tableProgressTracking.styles": {
+		  "class": "MediaWiki\\ResourceLoader\\CodexModule",
+			"styles": [
+				"index.less"
+			],
+			"codexStyleOnly": "true",
+			"codexComponents": [
+					"CdxCheckbox"
+			]
+		}
+	},
 	"Hooks": {
 		"ParserFirstCallInit": "main"
 	},

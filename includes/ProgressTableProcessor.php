@@ -155,27 +155,8 @@ class ProgressTableProcessor {
 
 			$progressHeader = $this->dom->createElement( 'th' );
 
-			$headerDiv = $this->dom->createElement( 'div' );
-			$headerDiv->setAttribute( 'class', 'header_icon' );
-
-			$icon = new IconWidget( [
-				'icon' => 'check',
-				'size' => 'medium',
-				'color' => 'default',
-			] );
-
-			// Create a temporary document to parse the IconWidget, otherwise, we end up with a string representation of the icon
-			$tempDoc = new DOMDocument();
-			@$tempDoc->loadHTML(
-				$icon->toString(),
-				LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD
-			);
-
-			$svgElement = $tempDoc->getElementsByTagName( 'span' )->item( 0 );
-			if ( $svgElement ) {
-				$importedSvg = $this->dom->importNode( $svgElement, true );
-				$headerDiv->appendChild( $importedSvg );
-			}
+			$headerDiv = $this->dom->createElement( 'span' );
+			$headerDiv->setAttribute( 'class', 'ext-tableProgressTracking-icon-check' );
 
 			$progressHeader->appendChild( $headerDiv );
 
@@ -198,24 +179,65 @@ class ProgressTableProcessor {
 	}
 
 	/**
-	 * Creates and adds a progress tracking checkbox cell to a single data row.
-	 * @todo switch this to Codex eventually, but for now in testing this is fine
-	 */
-	private function addCheckboxCellToRow( DOMElement $row, int $rowIndex ): void {
+    * Creates and adds a progress tracking checkbox cell to a single data row.
+    * @param DOMElement $row the row we are currently working on
+    * @param int $rowIndex the index we are applying to the row
+    * @return void
+    */
+    private function addCheckboxCellToRow( DOMElement $row, int $rowIndex ): void {
 		$rowId = $this->getUniqueRowId( $row, $rowIndex );
 		$row->setAttribute( 'data-row-id', $rowId );
 
-		$checkbox = $this->dom->createElement( 'input' );
-		$checkbox->setAttribute( 'type', 'checkbox' );
-		$checkbox->setAttribute( 'class', self::CHECKBOX_CLASS );
-		$checkbox->setAttribute( 'data-row-id', $rowId );
+		// outer wrapper
+		$checkboxDiv = $this->dom->createElement( 'div' );
+		$checkboxDiv->setAttribute( 'class', 'cdx-checkbox' );
+
+		// wrapper
+		$checkBoxWrapper = $this->dom->createElement( 'div' );
+		$checkBoxWrapper->setAttribute( 'class', 'cdx-checkbox__wrapper' );
+
+		// start input
+		$checkBoxInput = $this->dom->createElement( 'input' );
+		$checkBoxInput->setAttribute( 'type', 'checkbox' );
+		$checkBoxInput->setAttribute( 'class', 'cdx-checkbox__input' );
+		$checkBoxInput->setAttribute( 'data-row-id', $rowId );
+		$checkBoxInput->setAttribute( 'id', $rowId );
+
+		// empty span for the icon as per:
+		// https://doc.wikimedia.org/codex/main/components/demos/checkbox.html#css-only-version
+		$checkBoxSpan = $this->dom->createElement( 'span' );
+		$checkBoxSpan->setAttribute( 'class', 'cdx-checkbox__icon' );
+
+		// create the label container
+		$checkBoxLabelContainer = $this->dom->createElement( 'div' );
+		$checkBoxLabelContainer->setAttribute( 'class', 'cdx-checkbox__label cdx-label' );
+
+		// start label
+		$checkBoxLabel = $this->dom->createElement( 'label' );
+		$checkBoxLabel->setAttribute( 'for', $rowId );
+		$checkBoxLabel->setAttribute( 'class', 'cdx-label__label' );
+
+		// empty label as we don't need any text
+		$checkBoxLabelText = $this->dom->createElement( 'span', ' ' );
+		$checkBoxLabelText->setAttribute( 'class', 'cdx-label__label__text' );
+
+		// put everything together
+		$checkBoxLabel->appendChild( $checkBoxLabelText );
+		$checkBoxLabelContainer->appendChild( $checkBoxLabel );
+
+		$checkBoxWrapper->appendChild( $checkBoxInput );
+		$checkBoxWrapper->appendChild( $checkBoxSpan );
+		$checkBoxWrapper->appendChild( $checkBoxLabelContainer );
+
+		$checkboxDiv->appendChild( $checkBoxWrapper );
 
 		$cell = $this->dom->createElement( 'td' );
 		$cell->setAttribute( 'class', self::CHECKBOX_CELL_CLASS );
-		$cell->appendChild( $checkbox );
+		$cell->appendChild( $checkboxDiv );
 
 		$row->insertBefore( $cell, $row->firstChild );
-	}
+    }
+
 
 	/**
 	 * Generates a unique and safe ID for a given row.
