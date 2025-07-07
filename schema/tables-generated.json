@@ -1,0 +1,62 @@
+[
+    {
+        "name": "table_progress_tracking",
+        "comment": "The \"table_progress_tracking\" table is used to track user progress against a set of defined criteria.",
+        "columns": [
+            {
+                "name": "tpt_id",
+                "comment": "Unique ID for this entry in the table_progress_tracking table",
+                "type": "bigint",
+                "options": { "unsigned": true, "notnull": true, "autoincrement": true }
+            },
+            {
+                "name": "page_id",
+                "comment": "The ID of the page this table is on",
+                "type": "integer",
+                "options": { "unsigned": true, "notnull": true }
+            },
+            {
+                "name": "table_id",
+                "comment": "The ID of the table on the page, used to differentiate multiple tables on the same page",
+                "type": "integer",
+                "options": { "notnull": true }
+            },
+            {
+                "name": "user_id",
+                "comment": "The user who is tracking their progress on this table",
+                "type": "integer",
+                "options": { "unsigned": true, "notnull": true }
+            },
+            {
+                "name": "entity_id",
+                "comment": "The unique ID of the row in the table, used to track progress on a per-row basis. May be a (string)int or a string",
+                "type": "string",
+                "options": { "notnull": true, "length": 255 }
+            },
+            {
+                "name": "tpt_timestamp",
+                "comment": "Timestamp of the last update made by the user on this row",
+                "type": "mwtimestamp",
+                "options": { "notnull": true }
+            }
+        ],
+        "indexes": [
+            { 
+                "name": "tpt_user_page_table", 
+                "columns": ["user_id", "page_id", "table_id"],
+                "unique": false
+            },
+            {
+                "name": "tpt_page_table",
+                "columns": ["page_id", "table_id"],
+                "unique": false
+            },
+            {
+                "name": "tpt_unique_progress",
+                "columns": ["user_id", "page_id", "table_id", "entity_id"],
+                "unique": true
+            }
+        ],
+        "pk": ["tpt_id"]
+    }
+]
