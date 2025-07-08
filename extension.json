@@ -33,7 +33,8 @@
 		}
 	},
 	"Hooks": {
-		"ParserFirstCallInit": "main"
+		"ParserFirstCallInit": "main",
+		"LoadExtensionSchemaUpdates": "main"
 	},
 	"HookHandlers": {
         "main": {
