@@ -49,6 +49,14 @@
 			"services": [
 				"TableProgressTracking.ProgressService"
 			]
+		},
+		{
+			"path": "/progress-tracking/{articleId}/{tableId}",
+			"method": "GET",
+			"class": "Telepedia\\Extensions\\TableProgressTracking\\Rest\\GetProgressHandler",
+			"services": [
+				"TableProgressTracking.ProgressService"
+			]
 		}
 	],
 	"ServiceWiringFiles": [
