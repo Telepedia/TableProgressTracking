@@ -41,6 +41,19 @@
             "class": "Telepedia\\Extensions\\TableProgressTracking\\Hooks"
         }
     },
+	"RestRoutes": [
+		{
+			"path": "/progress-tracking/{articleId}/{tableId}",
+			"method": "POST",
+			"class": "Telepedia\\Extensions\\TableProgressTracking\\Rest\\TrackProgressHandler",
+			"services": [
+				"TableProgressTracking.ProgressService"
+			]
+		}
+	],
+	"ServiceWiringFiles": [
+		"includes/ServiceWiring.php"
+	],
     "AutoloadNamespaces": {
         "Telepedia\\Extensions\\TableProgressTracking\\": "includes/"
     },
