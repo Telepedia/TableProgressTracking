@@ -9,66 +9,67 @@ use Wikimedia\ParamValidator\ParamValidator;
 
 class TrackProgressHandler extends SimpleHandler {
 
-    public function __construct(
-        private readonly ProgressService $progressService
-    ) {}
+	public function __construct(
+		private readonly ProgressService $progressService
+	) {
+	}
 
-    /**
-     * Track a users progress on a specific article and table
-     * The entity ID is expected to be passed in the request body as JSON (only one at a time).
-     * @param int $articleId The ID of the article.
-     * @param int $tableId The ID of the table.
-     * @return Response
-     */
-    public function run( int $articleId, int $tableId ): Response {
-        $user = $this->getAuthority()->getUser();
+	/**
+	 * Track a users progress on a specific article and table
+	 * The entity ID is expected to be passed in the request body as JSON (only one at a time).
+	 * @param int $articleId The ID of the article.
+	 * @param int $tableId The ID of the table.
+	 * @return Response
+	 */
+	public function run( int $articleId, int $tableId ): Response {
+		$user = $this->getAuthority()->getUser();
 
-        if ( !$user->isRegistered() ) {
-            return $this->getResponseFactory()->createHttpError(
-                403,
-                [
-                    'error' => 'You must be logged in to track progress.',
-                ]
-            );
-        }
+		if ( !$user->isRegistered() ) {
+			return $this->getResponseFactory()->createHttpError(
+				403,
+				[
+					'error' => 'You must be logged in to track progress.',
+				]
+			);
+		}
 
-        $body = $this->getValidatedBody();
+		$body = $this->getValidatedBody();
 
-        if ( !isset( $body['entity_id'] ) ) {
-            return $this->getResponseFactory()->createHttpError(
-                400,
-                [
-                    'error' => 'Invalid or missing entity_id.',
-                ]
-            );
-        }
+		if ( !isset( $body['entity_id'] ) ) {
+			return $this->getResponseFactory()->createHttpError(
+				400,
+				[
+					'error' => 'Invalid or missing entity_id.',
+				]
+			);
+		}
 
-        // the database uses VARCHAR to allow for numeric and non-numeric entity ids, so cast the integer to a string
-        $entityId = (string)$body['entity_id'];
+		// the database uses VARCHAR to allow for numeric and non-numeric entity ids, so cast the integer to a string
+		$entityId = (string)$body['entity_id'];
 
-        $res = $this->progressService->trackProgress(
-            $articleId,
-            $tableId,
-            $user,
-            $entityId
-        );
+		$res = $this->progressService->trackProgress(
+			$articleId,
+			$tableId,
+			$user,
+			$entityId
+		);
 
-        if ( !$res->isOK() ) {
-            return $this->getResponseFactory()->createHttpError(
-                500,
-                [
-                    'error' => 'Failed to track progress.',
-                ]
-            );
-        }
+		if ( !$res->isOK() ) {
+			return $this->getResponseFactory()->createHttpError(
+				500,
+				[
+					'error' => 'Failed to track progress.',
+				]
+			);
+		}
 
-        return $this->getResponseFactory()->createNoContent();
-    }
+		return $this->getResponseFactory()->createNoContent();
+	}
 
-    /**
-     * @inheritDoc
-     */
-    public function getParamSettings() {
+	/**
+	 * @inheritDoc
+	 */
+	public function getParamSettings() {
 		return [
 			'articleId' => [
 				self::PARAM_SOURCE => 'path',
@@ -83,7 +84,7 @@ class TrackProgressHandler extends SimpleHandler {
 		];
 	}
 
-    public function getBodyParamSettings(): array {
+	public function getBodyParamSettings(): array {
 		return [
 			'entity_id' => [
 				self::PARAM_SOURCE => 'body',

@@ -9,7 +9,6 @@ use Exception;
 use MediaWiki\Html\Html;
 use MediaWiki\Parser\Parser;
 use MediaWiki\Parser\PPFrame;
-use OOUI\IconWidget;
 
 class ProgressTableProcessor {
 
@@ -103,9 +102,10 @@ class ProgressTableProcessor {
 		$tableNode = $this->dom->getElementsByTagName( 'table' )->item( 0 );
 
 		if ( !$tableNode ) {
-			throw new Exception( 'No table was provided for progress tracking. Please include a table between the <table-progress-tracking> tags.' );
-			$this->parser->getOutput()->updateCacheExpiry( 0 ); // disable caching for this page until the error is resolved? Does an exception automatically
+			// disable caching for this page until the error is resolved? Does an exception automatically
 			// disable caching? Also, switch to self::renderError()
+			$this->parser->getOutput()->updateCacheExpiry( 0 );
+			throw new Exception( 'No table was provided for progress tracking. Please include a table between the <table-progress-tracking> tags.' );
 		}
 
 		$this->table = $tableNode;
@@ -179,12 +179,12 @@ class ProgressTableProcessor {
 	}
 
 	/**
-    * Creates and adds a progress tracking checkbox cell to a single data row.
-    * @param DOMElement $row the row we are currently working on
-    * @param int $rowIndex the index we are applying to the row
-    * @return void
-    */
-    private function addCheckboxCellToRow( DOMElement $row, int $rowIndex ): void {
+	 * Creates and adds a progress tracking checkbox cell to a single data row.
+	 * @param DOMElement $row the row we are currently working on
+	 * @param int $rowIndex the index we are applying to the row
+	 * @return void
+	 */
+	private function addCheckboxCellToRow( DOMElement $row, int $rowIndex ): void {
 		$rowId = $this->getUniqueRowId( $row, $rowIndex );
 		$row->setAttribute( 'data-row-id', $rowId );
 
@@ -236,8 +236,7 @@ class ProgressTableProcessor {
 		$cell->appendChild( $checkboxDiv );
 
 		$row->insertBefore( $cell, $row->firstChild );
-    }
-
+	}
 
 	/**
 	 * Generates a unique and safe ID for a given row.

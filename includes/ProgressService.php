@@ -10,9 +10,9 @@ use Wikimedia\Rdbms\IConnectionProvider;
 
 class ProgressService {
 
-    public const CONSTRUCTOR_OPTIONS = [];
+	public const CONSTRUCTOR_OPTIONS = [];
 
-    public function __construct(
+	public function __construct(
 		private readonly ServiceOptions $options,
 		private readonly LoggerInterface $logger,
 		private readonly IConnectionProvider $connectionProvider
@@ -34,13 +34,13 @@ class ProgressService {
 		$entities = [];
 
 		$res = $dbr->newSelectQueryBuilder()
-			->select( [ 'entity_id' ])
+			->select( [ 'entity_id' ] )
 			->from( 'table_progress_tracking' )
 			->where( [
 				'page_id' => $articleId,
 				'table_id' => $tableId,
 				'user_id' => $user->getId(),
-			])
+			] )
 			->caller( __METHOD__ )
 			->fetchResultSet();
 
@@ -48,15 +48,15 @@ class ProgressService {
 			$entities[] = $row->entity_id;
 		}
 
-	    return $entities;
+		return $entities;
 	}
 
 	/**
 	 * Track the progress of a user on a specific article and table.
 	 * This function handles only 1 entity at a time.
-	 * 
-	 * @TODO: handle duplicate entries, don't return an error, just return a success status
-	 * 
+	 *
+	 * @todo handle duplicate entries, don't return an error, just return a success status
+	 *
 	 * @param int $articleId The ID of the article.
 	 * @param int $tableId The ID of the table.
 	 * @param UserIdentity $user The user whose progress is being tracked.
@@ -74,7 +74,7 @@ class ProgressService {
 				'user_id' => $user->getId(),
 				'entity_id' => $entityId,
 				'tpt_timestamp' => $dbw->timestamp(),
-			])
+			] )
 			->caller( __METHOD__ )
 			->execute();
 
@@ -94,7 +94,7 @@ class ProgressService {
 
 	/**
 	 * Delete the progress of a user on a specific article and table.
-	 * 
+	 *
 	 * @param int $articleId The ID of the article.
 	 * @param int $tableId The ID of the table.
 	 * @param UserIdentity $user The user whose progress is being deleted.

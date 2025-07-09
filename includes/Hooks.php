@@ -22,12 +22,12 @@ class Hooks implements ParserFirstCallInitHook, LoadExtensionSchemaUpdatesHook {
 	 *
 	 */
 	public function onLoadExtensionSchemaUpdates( $updater ): void {
-            $baseDir = dirname( __DIR__, 1 );
+			$baseDir = dirname( __DIR__, 1 );
 			$dbType = $updater->getDB()->getType();
 
 			$updater->addExtensionTable(
-    			'table_progress_tracking',
-    			"$baseDir/schema/$dbType/tables-generated.sql",
+				'table_progress_tracking',
+				"$baseDir/schema/$dbType/tables-generated.sql",
 			);
 	}
 }
