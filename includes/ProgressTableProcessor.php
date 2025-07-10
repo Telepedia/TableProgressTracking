@@ -55,12 +55,18 @@ class ProgressTableProcessor {
 	/**
 	 * @var DOMElement
 	 */
-	private DOMElement $table;
+	private ?DOMElement $table = null;
 
 	/**
 	 * @var int The index of the column that contains the unique identifier for each row.
 	 */
 	private int $uniqueColumnIndex;
+
+	/**
+	 * @var string|null An error message to be displayed if something goes wrong.
+	 * This is used to return the error to the caller so we can display an OOUI erorr box rather than throwing an exception
+	 */
+	private ?string $errorMessage = null;
 
 	/**
 	 * Constructor
@@ -87,8 +93,9 @@ class ProgressTableProcessor {
 		$tableHtml = $this->parser->recursiveTagParse( $this->wikitext, $this->frame );
 
 		if ( empty( trim( $tableHtml ) ) ) {
-			self::renderError( 'Parsing the wikitext resulted in empty HTML.' );
-		}
+        	$this->errorMessage = 'Parsing the wikitext resulted in empty HTML.';
+        	return;
+    	}
 
 		$this->dom = new DOMDocument();
 
@@ -102,11 +109,10 @@ class ProgressTableProcessor {
 		$tableNode = $this->dom->getElementsByTagName( 'table' )->item( 0 );
 
 		if ( !$tableNode ) {
-			// disable caching for this page until the error is resolved? Does an exception automatically
-			// disable caching? Also, switch to self::renderError()
-			$this->parser->getOutput()->updateCacheExpiry( 0 );
-			throw new Exception( 'No table was provided for progress tracking. Please include a table between the <table-progress-tracking> tags.' );
-		}
+        	$this->parser->getOutput()->updateCacheExpiry( 0 );
+        	$this->errorMessage = 'No table was provided for progress tracking. Please include a table between the <table-progress-tracking> tags.';
+        	return;
+    	}
 
 		$this->table = $tableNode;
 	}
@@ -120,6 +126,11 @@ class ProgressTableProcessor {
 	 * @return string The final, processed HTML.
 	 */
 	public function process(): string {
+
+		if ( $this->hasError() ) {
+        	return self::renderError( htmlspecialchars( $this->getErrorMessage() ) );
+    	}
+
 		$this->setTableAttributes();
 
 		if ( !empty( $this->args[ 'header-label' ] ) ) {
@@ -303,4 +314,21 @@ class ProgressTableProcessor {
 			$headerRow->insertBefore( $progressHeader, $headerRow->firstChild );
 		}
 	}
+
+	/**
+	 * Helper function to check if there was an error during processing.
+	 * @return bool True if there was an error, false otherwise.
+	 */
+	public function hasError(): bool {
+    	return $this->errorMessage !== null;
+	}
+
+	/**
+	 * Helper function to get the error message if there was an error.
+	 * @return string|null The error message, or null if there was no error.
+	 */
+	public function getErrorMessage(): ?string {
+    	return $this->errorMessage;
+	}
+
 }
