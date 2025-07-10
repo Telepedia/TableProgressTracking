@@ -2,11 +2,11 @@ var ProgressTracker = {
     options: {
         storageKey: 'mediawiki.table-progress-tracking',
         selectors: {
-            checkbox: 'input[type="checkbox"][data-row-id][data-table-id]',
-            table: 'table[data-table-id]'
+            checkbox: 'input[type="checkbox"][data-row-id]',
+            table: 'table[data-progress-table-id]'
         },
         attributes: {
-            tableId: 'data-table-id',
+            tableId: 'data-progress-table-id',
             rowId: 'data-row-id'
         },
         classes: {
@@ -25,8 +25,10 @@ var ProgressTracker = {
             return;
         }
 
-        this.setupEventListeners();
         this.setupIntersectionObserver();
+        this.setupEventListeners();
+
+        this.isInitialised = true;
     },
 
     /**
@@ -49,7 +51,7 @@ var ProgressTracker = {
                     let tableId = table.getAttribute( this.options.attributes.tableId );
 
                     if ( tableId ) {
-                            this.loadTableProgress( tableId ).then( function () {
+                        this.loadTableProgress( tableId ).then( function () {
                             this.syncTableCheckboxes( table, tableId );
                             this.attachCheckboxListeners( table );
                         }.bind( this ) );
@@ -87,18 +89,55 @@ var ProgressTracker = {
         // we didn't have anything in the local storage, so lets make a backend request to get the data
         const api = new mw.Rest();
 
-        try {
-            let response = api.get( `/progress-tracking/${this.pageId}/${tableId}`);
+        return api.get( `/progress-tracking/${this.pageId}/${tableId}` ).then( function ( response ) {
             if ( response ) {
-                this.progressData.set( tableId, progress );
+                progress = response;
             }
 
-            localStorage.setItem(`${this.options.storageKey}-${this.pageId}-${tableId}`, JSON.stringify(progress));
-        } catch ( error ) {
-            console.log( "TableProgressTracking: failed to fetch data: ", error );
-        }
+            this.progressData.set( tableId, progress );
+            
+            try {
+                localStorage.setItem( `${this.options.storageKey}-${this.pageId}-${tableId}`, JSON.stringify( progress ) );
+            } catch ( e ) {
+                console.error( "Could not write to LocalStorage.", e );
+            }
+            
+            return progress;
+        }.bind( this ) ).catch( function ( error ) {
+            
+            // Still set the progress data (even if empty) and return it
+            this.progressData.set( tableId, progress );
+            return progress;
+        }.bind( this ) );
+    },
 
-        this.progressData.set( tableId, progress );
-        return progress;
+    setupEventListeners: function() {
+        const tables = document.querySelectorAll( this.options.selectors.table );
+        
+        tables.forEach( function ( table ) {;
+            if ( this.intersectionObserver ) {
+                this.intersectionObserver.observe( table );
+            } 
+        }.bind( this ) );
+
+        // @TODO: if intersectiton observer is not available, process the table immediately
+        // need to check the compatibility of the IntersectionObserver API against MediaWiki's supported browsers
+    },
+
+    syncTableCheckboxes: function ( table, tableId ) { 
+        let progress = this.progressData.get( tableId ) || [];
+
+        table.querySelectorAll( this.options.selectors.checkbox ).forEach( function ( checkbox ) {
+            let rowId = checkbox.getAttribute( this.options.attributes.rowId );
+            if ( rowId ) {
+                let isChecked = progress.includes( rowId );
+                checkbox.checked = isChecked;
+            }
+        }.bind( this ) ); 
     }
-}
+};
+
+
+(function () {
+    mw.hook('wikipage.content').add( ProgressTracker.init.bind( ProgressTracker ) );
+})();
