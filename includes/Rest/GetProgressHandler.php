@@ -34,7 +34,7 @@ class GetProgressHandler extends SimpleHandler {
 		}
 
 
-        $res = json_encode( $this->progressService->getProgress($articleId, $tableId, $user ) );
+        $res = $this->progressService->getProgress($articleId, $tableId, $user );
 
 		return $this->getResponseFactory()->createJson( $res );
 	}
