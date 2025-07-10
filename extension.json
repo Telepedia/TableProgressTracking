@@ -30,6 +30,11 @@
 			"codexComponents": [
 					"CdxCheckbox"
 			]
+		},
+		"ext.tableProgressTracking.scripts": {
+			"scripts": [
+				"index.js"
+			]
 		}
 	},
 	"Hooks": {

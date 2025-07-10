@@ -27,6 +27,7 @@ class TableGenerator {
 
 		// Switch this to using codex icons eventually to avoid the FOUC on the check icon
 		$parser->getOutput()->addModuleStyles( [ 'ext.tableProgressTracking.styles' ] );
+		$parser->getOutput()->addModules( [ 'ext.tableProgressTracking.scripts' ] );
 
 		try {
 			if ( empty( $input ) ) {
