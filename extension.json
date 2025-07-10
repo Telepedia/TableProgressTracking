@@ -1,85 +1,85 @@
 {
-  "name": "TableProgressTracking",
-  "author": [
-    "Telepedia Ltd."
-  ],
-  "url": "https://www.mediawiki.org/wiki/Extension:TableProgressTracking",
-  "descriptionmsg": "tableprogresstracking-desc",
-  "license-name": "Apache-2.0",
-  "type": "other",
-  "version": "1.0.0",
-  "requires": {
-    "MediaWiki": ">= 1.43.0"
-  },
-  "MessagesDirs": {
-    "TableProgressTracking": [
-      "i18n"
-    ]
-  },
-  "ResourceFileModulePaths": {
-    "localBasePath": "resources",
-    "remoteExtPath": ""
-  },
-  "ResourceModules": {
-    "ext.tableProgressTracking.styles": {
-      "class": "MediaWiki\\ResourceLoader\\CodexModule",
-      "styles": [
-        "index.less"
-      ],
-      "codexStyleOnly": "true",
-      "codexComponents": [
-        "CdxCheckbox"
-      ]
-    },
-    "ext.tableProgressTracking.scripts": {
-      "scripts": [
-        "index.js"
-      ],
-      "dependencies": [
-        "mediawiki.user"
-      ]
-    }
-  },
-  "Hooks": {
-    "ParserFirstCallInit": "main",
-    "LoadExtensionSchemaUpdates": "main"
-  },
-  "HookHandlers": {
-	"main": {
-		"class": "Telepedia\\Extensions\\TableProgressTracking\\Hooks"
-    }
-  },
-  "RestRoutes": [
-    {
-      "path": "/progress-tracking/{articleId}/{tableId}",
-      "method": "POST",
-      "class": "Telepedia\\Extensions\\TableProgressTracking\\Rest\\TrackProgressHandler",
-      "services": [
-        "TableProgressTracking.ProgressService"
-      ]
-    },
-    {
-      "path": "/progress-tracking/{articleId}/{tableId}",
-      "method": "GET",
-      "class": "Telepedia\\Extensions\\TableProgressTracking\\Rest\\GetProgressHandler",
-      "services": [
-        "TableProgressTracking.ProgressService"
-      ]
-    },
-    {
-      "path": "/progress-tracking/{articleId}/{tableId}",
-      "method": "DELETE",
-      "class": "Telepedia\\Extensions\\TableProgressTracking\\Rest\\DeleteProgressHandler",
-      "services": [
-        "TableProgressTracking.ProgressService"
-      ]
-    }
-  ],
-  "ServiceWiringFiles": [
-    "includes/ServiceWiring.php"
-  ],
-  "AutoloadNamespaces": {
-    "Telepedia\\Extensions\\TableProgressTracking\\": "includes/"
-  },
-  "manifest_version": 2
+	"name": "TableProgressTracking",
+	"author": [
+		"Telepedia Ltd."
+	],
+	"url": "https://www.mediawiki.org/wiki/Extension:TableProgressTracking",
+	"descriptionmsg": "tableprogresstracking-desc",
+	"license-name": "Apache-2.0",
+	"type": "other",
+	"version": "1.0.0",
+	"requires": {
+		"MediaWiki": ">= 1.43.0"
+	},
+	"MessagesDirs": {
+		"TableProgressTracking": [
+			"i18n"
+		]
+	},
+	"ResourceFileModulePaths": {
+		"localBasePath": "resources",
+		"remoteExtPath": ""
+	},
+	"ResourceModules": {
+		"ext.tableProgressTracking.styles": {
+			"class": "MediaWiki\\ResourceLoader\\CodexModule",
+			"styles": [
+				"index.less"
+			],
+			"codexStyleOnly": "true",
+			"codexComponents": [
+				"CdxCheckbox"
+			]
+		},
+		"ext.tableProgressTracking.scripts": {
+			"scripts": [
+				"index.js"
+			],
+			"dependencies": [
+				"mediawiki.user"
+			]
+		}
+	},
+	"Hooks": {
+		"ParserFirstCallInit": "main",
+		"LoadExtensionSchemaUpdates": "main"
+	},
+	"HookHandlers": {
+		"main": {
+			"class": "Telepedia\\Extensions\\TableProgressTracking\\Hooks"
+		}
+	},
+	"RestRoutes": [
+		{
+			"path": "/progress-tracking/{articleId}/{tableId}",
+			"method": "POST",
+			"class": "Telepedia\\Extensions\\TableProgressTracking\\Rest\\TrackProgressHandler",
+			"services": [
+				"TableProgressTracking.ProgressService"
+			]
+		},
+		{
+			"path": "/progress-tracking/{articleId}/{tableId}",
+			"method": "GET",
+			"class": "Telepedia\\Extensions\\TableProgressTracking\\Rest\\GetProgressHandler",
+			"services": [
+				"TableProgressTracking.ProgressService"
+			]
+		},
+		{
+			"path": "/progress-tracking/{articleId}/{tableId}",
+			"method": "DELETE",
+			"class": "Telepedia\\Extensions\\TableProgressTracking\\Rest\\DeleteProgressHandler",
+			"services": [
+				"TableProgressTracking.ProgressService"
+			]
+		}
+	],
+	"ServiceWiringFiles": [
+		"includes/ServiceWiring.php"
+	],
+	"AutoloadNamespaces": {
+		"Telepedia\\Extensions\\TableProgressTracking\\": "includes/"
+	},
+	"manifest_version": 2
 }
