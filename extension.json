@@ -62,6 +62,14 @@
 			"services": [
 				"TableProgressTracking.ProgressService"
 			]
+		},
+		{
+			"path": "/progress-tracking/{articleId}/{tableId}",
+			"method": "DELETE",
+			"class": "Telepedia\\Extensions\\TableProgressTracking\\Rest\\DeleteProgressHandler",
+			"services": [
+				"TableProgressTracking.ProgressService"
+			]
 		}
 	],
 	"ServiceWiringFiles": [
