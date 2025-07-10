@@ -1,1 +1,8 @@
-{}
+{
+    "@metadata": {
+		"authors": [
+			"Telepedia Ltd."
+		]
+	},
+    "tableprogresstracking-desc": "Description shown on Special:Version"
+}

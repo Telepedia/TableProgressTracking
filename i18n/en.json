@@ -1,1 +1,8 @@
-{}
+{
+    "@metadata": {
+		"authors": [
+			"Telepedia Ltd."
+		]
+	},
+    "tableprogresstracking-desc": "An extension to track progress against MediaWiki tables."
+}
