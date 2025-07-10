@@ -124,6 +124,10 @@ var ProgressTracker = {
         // need to check the compatibility of the IntersectionObserver API against MediaWiki's supported browsers
     },
 
+    /**
+     * If the entity is in the entities map, then check the checkbox to ensure it shows as completed
+     * @TODO: also add a class to the row so that the background can be changed to green 
+     */
     syncTableCheckboxes: function ( table, tableId ) { 
         let progress = this.progressData.get( tableId ) || [];
 
@@ -134,6 +138,77 @@ var ProgressTracker = {
                 checkbox.checked = isChecked;
             }
         }.bind( this ) ); 
+    },
+
+    /**
+     * Attach our checkbox listeners so that when a checkbox is clicked, we can send the HTTP request to update the progress
+     */
+    attachCheckboxListeners: function ( table ) {
+        let tableId = table.getAttribute( this.options.attributes.tableId );
+
+        // slight hack/mixture of jQuery and vanilla JS here, but this is the best I can think of at this time
+        $( table ).off( 'change.progressTracker' ).on( 'change.progressTracker', this.options.selectors.checkbox, function ( event ) {
+            let rowId = event.target.getAttribute( this.options.attributes.rowId );
+            this.handleCheckboxChange( event, tableId, rowId );
+        }.bind( this ) );
+    },
+
+    handleCheckboxChange: async function ( event, tableId, rowId ) {
+        let checkbox = event.target;
+
+        if ( !rowId ) {
+            console.error( 'TableProgressTracking: Checkbox does not have a data-row-id attribute.' );
+            return;
+        }
+
+        // if the http request fails, we need to revert the checkbox to its original state
+        const originalState = checkbox.checked;
+
+        let table = checkbox.closest( 'table' );
+        table.classList.add( this.options.classes.saving );
+
+        const api = new mw.Rest();
+        
+        try {
+            if ( checkbox.checked ) {
+                await api.post( `/progress-tracking/${this.pageId}/${tableId}`, { 
+                    entity_id: rowId 
+                } );
+            } else {
+                await api.delete( `/progress-tracking/${this.pageId}/${tableId}`, { 
+                    entity_id: rowId 
+                } );
+            }
+
+            let progress = this.progressData.get( tableId ) || [];
+            
+            if ( checkbox.checked ) {
+                if ( !progress.includes( rowId ) ) {
+                    progress.push( rowId );
+                }
+            } else {
+                progress = progress.filter( id => id !== rowId );
+            }
+
+            try {
+                localStorage.setItem( `${this.options.storageKey}-${this.pageId}-${tableId}`, JSON.stringify( progress ) );
+            } catch ( e ) {
+                console.error( "TableProgressTracking: Could not write to LocalStorage.", e );
+            }
+
+            this.progressData.set( tableId, progress );
+            this.syncTableCheckboxes( table, tableId );
+
+        } catch ( error ) {
+            console.error( 'TableProgressTracking: Error updating progress.', error );
+            
+            // lets revert back to the orginal state
+            checkbox.checked = !originalState;
+            
+            table.classList.add( this.options.classes.error );
+        } finally {
+            table.classList.remove( this.options.classes.saving );
+        }
     }
 };
 
