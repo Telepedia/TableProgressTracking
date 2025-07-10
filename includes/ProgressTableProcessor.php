@@ -213,6 +213,10 @@ class ProgressTableProcessor {
 		$checkBoxInput->setAttribute( 'class', 'cdx-checkbox__input' );
 		$checkBoxInput->setAttribute( 'data-row-id', $rowId );
 		$checkBoxInput->setAttribute( 'id', $rowId );
+		// disable the checkbox by default, when the JS runs, it will remove the disabled attribute.
+		// this is to ensure that no checkbox is selected before the JS initialises (or in the case of an unregistered user,
+		// the checkbox will remain disabled)
+		$checkBoxInput->setAttribute('disabled', 'disabled');
 
 		// empty span for the icon as per:
 		// https://doc.wikimedia.org/codex/main/components/demos/checkbox.html#css-only-version

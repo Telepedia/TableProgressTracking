@@ -25,6 +25,12 @@ var ProgressTracker = {
             return;
         }
 
+        // bail if the user is not logged in, nothing we can do here 
+        // @TODO: maybe redirect them to the sign in page instead?
+        if ( mw.user.isAnon() ) {
+            return;
+        }
+
         this.setupIntersectionObserver();
         this.setupEventListeners();
 
@@ -136,6 +142,9 @@ var ProgressTracker = {
             if ( rowId ) {
                 let isChecked = progress.includes( rowId );
                 checkbox.checked = isChecked;
+                // remove the disable attribute from the checkbox so that it can be actioned
+                // this happens irrespective of whether the checkbox is checked or not
+                checkbox.disabled = false;
             }
         }.bind( this ) ); 
     },
