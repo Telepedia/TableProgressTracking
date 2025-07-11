@@ -18,16 +18,6 @@ class ProgressTableProcessor {
 	private const CHECKBOX_CELL_CLASS = 'progress-tracker-checkbox-cell';
 
 	/**
-	 * @var string The class for the checkbox input element
-	 */
-	private const CHECKBOX_CLASS = 'progress-tracker-checkbox';
-
-	/**
-	 * @var string The class for the container that wraps the entire progress tracking table
-	 */
-	private const CONTAINER_CLASS = 'progress-tracker-container';
-
-	/**
 	 * @var string The wikitext between the opening and closing tags of the <table-progress-tracking> tag.
 	 */
 	private string $wikitext;
@@ -135,6 +125,8 @@ class ProgressTableProcessor {
 
 	/**
 	 * Validates that the unique-column-index is within the valid range for the table
+	 * @TODO: there is an error here, if someone passes wikitext to the column which has the unique-column-index, it falls 
+	 * back to the row index.
 	 */
 	private function validateUniqueColumnIndex(): void {
 		if ( $this->uniqueColumnIndex < 0 ) {
