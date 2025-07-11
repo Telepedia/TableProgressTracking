@@ -58,9 +58,9 @@ class ProgressTableProcessor {
 	private ?DOMElement $table = null;
 
 	/**
-	 * @var int The index of the column that contains the unique identifier for each row.
+	 * @var int|null The index of the column that contains the unique identifier for each row.
 	 */
-	private int $uniqueColumnIndex;
+	private ?int $uniqueColumnIndex = null;
 
 	/**
 	 * @var string|null An error message to be displayed if something goes wrong.
@@ -78,7 +78,12 @@ class ProgressTableProcessor {
 		$this->args = $args;
 		$this->parser = $parser;
 		$this->frame = $frame;
-		$this->uniqueColumnIndex = intval( $this->args['unique-column-index'] ?? 0 ); // @TDOD, error instead of 0?
+		
+		// Only set the unique column index if it is provided in the arguments
+		// if not, we validate later that each row passes its own data-row-id
+		if ( isset( $this->args['unique-column-index'] ) ) {
+			$this->uniqueColumnIndex = intval( $this->args['unique-column-index'] );
+		}
 
 		$this->loadAndValidateHtml();
 	}
@@ -115,6 +120,79 @@ class ProgressTableProcessor {
     	}
 
 		$this->table = $tableNode;
+		
+		// Validate unique-column-index if provided
+		if ( $this->uniqueColumnIndex !== null ) {
+			$this->validateUniqueColumnIndex();
+		}
+	}
+
+	/**
+	 * Validates that the unique-column-index is within the valid range for the table
+	 */
+	private function validateUniqueColumnIndex(): void {
+		if ( $this->uniqueColumnIndex < 0 ) {
+			$this->errorMessage = 'unique-column-index must be 0 or greater.';
+			return;
+		}
+
+		// Find the maximum number of columns by checking all rows
+		$xpath = new DOMXPath( $this->dom );
+		$allRows = $xpath->query( './/tr', $this->table );
+		$maxColumns = 0;
+
+		foreach ( $allRows as $row ) {
+			$cellCount = $row->getElementsByTagName( 'td' )->length + $row->getElementsByTagName( 'th' )->length;
+			$maxColumns = max( $maxColumns, $cellCount );
+		}
+
+		if ( $this->uniqueColumnIndex >= $maxColumns ) {
+			$this->errorMessage = "unique-column-index ({$this->uniqueColumnIndex}) is out of range. Table has {$maxColumns} columns (0-" . ($maxColumns - 1) . ").";
+			return;
+		}
+	}
+
+	/**
+	 * Validates that all data rows have data-row-id attributes when unique-column-index is not provided
+	 */
+	private function validateDataRowIds(): bool {
+		$xpath = new DOMXPath( $this->dom );
+		$dataRows = $xpath->query( './/tr[not(th)]', $this->table );
+
+		foreach ( $dataRows as $row ) {
+			$rowId = $this->extractDataRowId( $row );
+			if ( empty( $rowId ) ) {
+				$this->errorMessage = 'When unique-column-index is not provided, all data rows must have a data-row-id attribute.';
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	/**
+	 * Extracts the data-row-id from a table row, handling multiple occurrences
+	 * @param DOMElement $row The row element
+	 * @return string|null The data-row-id value, or null if not found
+	 */
+	private function extractDataRowId( DOMElement $row ): ?string {
+		// Check if the row itself has data-row-id
+		if ( $row->hasAttribute( 'data-row-id' ) ) {
+			return $row->getAttribute( 'data-row-id' );
+		}
+
+		// Check cells for data-row-id (using the last one found)
+		// this allows us to handle the case where a user passes a data-row-id on more than one column
+		$cells = $row->getElementsByTagName( 'td' );
+		$lastRowId = null;
+
+		foreach ( $cells as $cell ) {
+			if ( $cell->hasAttribute( 'data-row-id' ) ) {
+				$lastRowId = $cell->getAttribute( 'data-row-id' );
+			}
+		}
+
+		return $lastRowId;
 	}
 
 	/**
@@ -130,6 +208,11 @@ class ProgressTableProcessor {
 		if ( $this->hasError() ) {
         	return self::renderError( htmlspecialchars( $this->getErrorMessage() ) );
     	}
+
+		// If no unique-column-index is provided, validate that all rows have data-row-id
+		if ( $this->uniqueColumnIndex === null && !$this->validateDataRowIds() ) {
+			return self::renderError( htmlspecialchars( $this->getErrorMessage() ) );
+		}
 
 		$this->setTableAttributes();
 
@@ -255,31 +338,44 @@ class ProgressTableProcessor {
 
 	/**
 	 * Generates a unique and safe ID for a given row.
-	 * It first tries to use the content of the specified unique column,
-	 * & sanitizes it. If that fails, it falls back to a row index.
-	 * @todo not sure if this is the right approach at the minute, we should potentially throw an error or smth?
+	 * Priority: 1) data-row-id attribute, 2) unique column content, 3) row index fallback
 	 * @param DOMElement $row The row element to generate the ID for.
 	 * @param int $rowIndex The index of the row in the table.
 	 * @return string A unique ID for the row, sanitized to be safe for HTML attributes
 	 */
 	private function getUniqueRowId( DOMElement $row, int $rowIndex ): string {
-		$tdElements = $row->getElementsByTagName( 'td' );
-		$rowIdContent = null;
+		
+		// the most important is the data-row-id, if this is passed, we ignore the unique-column-index
+		$dataRowId = $this->extractDataRowId( $row );
+		if ( !empty( $dataRowId ) ) {
+			return $this->sanitizeRowId( $dataRowId );
+		}
 
-		if ( $tdElements->length > $this->uniqueColumnIndex ) {
-			$uniqueCell = $tdElements->item( $this->uniqueColumnIndex );
-			if ( $uniqueCell ) {
-				$rowIdContent = trim( $uniqueCell->textContent );
+		// Wasn't found, use the unique-column-index if it is set
+		if ( $this->uniqueColumnIndex !== null ) {
+			$tdElements = $row->getElementsByTagName( 'td' );
+			if ( $tdElements->length > $this->uniqueColumnIndex ) {
+				$uniqueCell = $tdElements->item( $this->uniqueColumnIndex );
+				if ( $uniqueCell ) {
+					$rowIdContent = trim( $uniqueCell->textContent );
+					if ( !empty( $rowIdContent ) ) {
+						return $this->sanitizeRowId( $rowIdContent );
+					}
+				}
 			}
 		}
 
-		if ( !empty( $rowIdContent ) ) {
-			// Sanitize to make it a safe value for HTML attributes.
-			return preg_replace( '/[^a-zA-Z0-9_-]/', '_', $rowIdContent );
-		}
-
-		// Fallback if the specified column is empty or doesn't exist.
+		// Fallback to the row index, but maybe in the future we return an erorr here?
 		return 'row_' . $rowIndex;
+	}
+
+	/**
+	 * Sanitizes a row ID to make it safe for HTML attributes
+	 * @param string $rowId The raw row ID
+	 * @return string The sanitized row ID
+	 */
+	private function sanitizeRowId( string $rowId ): string {
+		return preg_replace( '/[^a-zA-Z0-9_-]/', '_', $rowId );
 	}
 
 	 /**
@@ -303,7 +399,7 @@ class ProgressTableProcessor {
 
 	/**
 	 * Helper function to add the header for the progress tracking column, if the user provided their own
-	 * label (therefore, do not use the OOUI checkbox icon).
+	 * label (therefore, do not use the codex checkbox icon).
 	 * @param string $headerLabel The label to use for the progress tracking header.
 	 * @return void [adds to the table]
 	 */
