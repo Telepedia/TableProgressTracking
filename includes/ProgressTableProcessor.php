@@ -54,7 +54,6 @@ class ProgressTableProcessor {
 
 	/**
 	 * @var string|null An error message to be displayed if something goes wrong.
-	 * This is used to return the error to the caller so we can display an OOUI erorr box rather than throwing an exception
 	 */
 	private ?string $errorMessage = null;
 
@@ -68,7 +67,7 @@ class ProgressTableProcessor {
 		$this->args = $args;
 		$this->parser = $parser;
 		$this->frame = $frame;
-		
+
 		// Only set the unique column index if it is provided in the arguments
 		// if not, we validate later that each row passes its own data-row-id
 		if ( isset( $this->args['unique-column-index'] ) ) {
@@ -94,9 +93,9 @@ class ProgressTableProcessor {
 		$tableHtml = $this->parser->recursiveTagParse( $this->wikitext, $this->frame );
 
 		if ( empty( trim( $tableHtml ) ) ) {
-        	$this->errorMessage = 'Parsing the wikitext resulted in empty HTML.';
-        	return;
-    	}
+			$this->errorMessage = 'Parsing the wikitext resulted in empty HTML.';
+			return;
+		}
 
 		$this->dom = new DOMDocument();
 
@@ -110,13 +109,13 @@ class ProgressTableProcessor {
 		$tableNode = $this->dom->getElementsByTagName( 'table' )->item( 0 );
 
 		if ( !$tableNode ) {
-        	$this->parser->getOutput()->updateCacheExpiry( 0 );
-        	$this->errorMessage = 'No table was provided for progress tracking. Please include a table between the <table-progress-tracking> tags.';
-        	return;
-    	}
+			$this->parser->getOutput()->updateCacheExpiry( 0 );
+			$this->errorMessage = 'No table was provided for progress tracking. Please include a table between the <table-progress-tracking> tags.';
+			return;
+		}
 
 		$this->table = $tableNode;
-		
+
 		// Validate unique-column-index if provided
 		if ( $this->uniqueColumnIndex !== null ) {
 			$this->validateUniqueColumnIndex();
@@ -125,7 +124,7 @@ class ProgressTableProcessor {
 
 	/**
 	 * Validates that the unique-column-index is within the valid range for the table
-	 * @TODO: there is an error here, if someone passes wikitext to the column which has the unique-column-index, it falls 
+	 * @todo there is an error here, if someone passes wikitext to the column which has the unique-column-index, it falls
 	 * back to the row index.
 	 */
 	private function validateUniqueColumnIndex(): void {
@@ -145,7 +144,7 @@ class ProgressTableProcessor {
 		}
 
 		if ( $this->uniqueColumnIndex >= $maxColumns ) {
-			$this->errorMessage = "unique-column-index ({$this->uniqueColumnIndex}) is out of range. Table has {$maxColumns} columns (0-" . ($maxColumns - 1) . ").";
+			$this->errorMessage = "unique-column-index ({$this->uniqueColumnIndex}) is out of range. Table has {$maxColumns} columns (0-" . ( $maxColumns - 1 ) . ").";
 			return;
 		}
 	}
@@ -202,10 +201,9 @@ class ProgressTableProcessor {
 	 * @return string The final, processed HTML.
 	 */
 	public function process(): string {
-
 		if ( $this->hasError() ) {
-        	return self::renderError( htmlspecialchars( $this->getErrorMessage() ) );
-    	}
+			return self::renderError( htmlspecialchars( $this->getErrorMessage() ) );
+		}
 
 		// If no unique-column-index is provided, validate that all rows have data-row-id
 		if ( $this->uniqueColumnIndex === null && !$this->validateDataRowIds() ) {
@@ -297,7 +295,7 @@ class ProgressTableProcessor {
 		// disable the checkbox by default, when the JS runs, it will remove the disabled attribute.
 		// this is to ensure that no checkbox is selected before the JS initialises (or in the case of an unregistered user,
 		// the checkbox will remain disabled)
-		$checkBoxInput->setAttribute('disabled', 'disabled');
+		$checkBoxInput->setAttribute( 'disabled', 'disabled' );
 
 		// empty span for the icon as per:
 		// https://doc.wikimedia.org/codex/main/components/demos/checkbox.html#css-only-version
@@ -342,7 +340,6 @@ class ProgressTableProcessor {
 	 * @return string A unique ID for the row, sanitized to be safe for HTML attributes
 	 */
 	private function getUniqueRowId( DOMElement $row, int $rowIndex ): string {
-		
 		// the most important is the data-row-id, if this is passed, we ignore the unique-column-index
 		$dataRowId = $this->extractDataRowId( $row );
 		if ( !empty( $dataRowId ) ) {
@@ -418,7 +415,7 @@ class ProgressTableProcessor {
 	 * @return bool True if there was an error, false otherwise.
 	 */
 	public function hasError(): bool {
-    	return $this->errorMessage !== null;
+		return $this->errorMessage !== null;
 	}
 
 	/**
@@ -426,7 +423,7 @@ class ProgressTableProcessor {
 	 * @return string|null The error message, or null if there was no error.
 	 */
 	public function getErrorMessage(): ?string {
-    	return $this->errorMessage;
+		return $this->errorMessage;
 	}
 
 }

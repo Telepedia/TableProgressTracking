@@ -79,7 +79,8 @@ class ProgressService {
 			->execute();
 
 		if ( !$dbw->insertId() ) {
-			$this->logger->error( 'Failed to track progress for user {user} on article {article} and table {table} with entity {entity}.',
+			$this->logger->error(
+				'Failed to track progress for user {user} on article {article} and table {table} with entity {entity}.',
 				[
 					'user' => $user->getName(),
 					'article' => $articleId,
@@ -116,7 +117,8 @@ class ProgressService {
 			->execute();
 
 		if ( $dbw->affectedRows() === 0 ) {
-			$this->logger->error( 'Failed to delete progress for user {user} on article {article} and table {table} with entity {entity}.',
+			$this->logger->error(
+				'Failed to delete progress; user: {user},  article: {article}, table: {table}, entity: {entity}.',
 				[
 					'user' => $user->getName(),
 					'article' => $articleId,

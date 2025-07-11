@@ -14,7 +14,7 @@ class TableGenerator {
 	 * Entrypoint to render the progress tracking table.
 	 * This function is called from the onParserFirstCallInit (use the <table-progress-tracking> tag).
 	 *
-	 * @param string|null $input contents between the opening and closing tags of the <table-progress-tracking> tag (or null if empty)
+	 * @param string|null $input contents between the <table-progress-tracking> tag (or null if empty)
 	 * @param array $args The attributes of the tag
 	 * @param Parser $parser The parser object.
 	 * @param PPFrame $frame The frame object.

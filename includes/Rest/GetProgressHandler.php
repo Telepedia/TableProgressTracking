@@ -33,8 +33,7 @@ class GetProgressHandler extends SimpleHandler {
 			);
 		}
 
-
-        $res = $this->progressService->getProgress($articleId, $tableId, $user );
+		$res = $this->progressService->getProgress( $articleId, $tableId, $user );
 
 		return $this->getResponseFactory()->createJson( $res );
 	}

@@ -48,11 +48,11 @@ class DeleteProgressHandler extends SimpleHandler {
 		$entityId = (string)$body['entity_id'];
 
 		$res = $this->progressService->deleteProgress(
-            $articleId,
-            $tableId,
-            $user,
-            $entityId
-        );
+			$articleId,
+			$tableId,
+			$user,
+			$entityId
+		);
 
 		if ( !$res->isOK() ) {
 			return $this->getResponseFactory()->createHttpError(
