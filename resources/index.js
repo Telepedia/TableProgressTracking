@@ -86,7 +86,7 @@ var ProgressTracker = {
 		try {
 			stored = localStorage.getItem( `${this.options.storageKey} - ${this.pageId} - ${tableId}` );
 			if ( stored ) {
-				progress = JSON.parse( stored );
+				return JSON.parse( stored );
 			}
 		} catch ( e ) {
 			console.error( "Could not read from LocalStorage.", e );
@@ -95,7 +95,7 @@ var ProgressTracker = {
 		// we didn't have anything in the local storage, so lets make a backend request to get the data
 		const api = new mw.Rest();
 
-		return api.get( ` / progress - tracking / ${this.pageId} / ${tableId}` ).then( function ( response ) {
+		return api.get( `/progress-tracking/${this.pageId}/${tableId}` ).then( function ( response ) {
 			if ( response ) {
 				progress = response;
 			}
@@ -103,7 +103,7 @@ var ProgressTracker = {
 			this.progressData.set( tableId, progress );
 
 			try {
-				localStorage.setItem( `${this.options.storageKey} - ${this.pageId} - ${tableId}`, JSON.stringify( progress ) );
+				localStorage.setItem( `${this.options.storageKey}-${this.pageId}-${tableId}`, JSON.stringify( progress ) );
 			} catch ( e ) {
 				console.error( "Could not write to LocalStorage.", e );
 			}
@@ -179,11 +179,11 @@ var ProgressTracker = {
 
 		try {
 			if ( checkbox.checked ) {
-				await api.post( ` / progress - tracking / ${this.pageId} / ${tableId}`, {
+				await api.post( `/progress-tracking/${this.pageId}/${tableId}`, {
 					entity_id: rowId
 				} );
 			} else {
-				await api.delete( ` / progress - tracking / ${this.pageId} / ${tableId}`, {
+				await api.delete( `/progress-tracking/${this.pageId}/${tableId}`, {
 					entity_id: rowId
 				} );
 			}
@@ -199,7 +199,7 @@ var ProgressTracker = {
 			}
 
 			try {
-				localStorage.setItem( `${this.options.storageKey} - ${this.pageId} - ${tableId}`, JSON.stringify( progress ) );
+				localStorage.setItem( `${this.options.storageKey}-${this.pageId}-${tableId}`, JSON.stringify( progress ) );
 			} catch ( e ) {
 				console.error( "TableProgressTracking: Could not write to LocalStorage.", e );
 			}
