@@ -85,6 +85,12 @@ class ProgressTableProcessor {
 			$this->uniqueColumnIndex = intval( $this->args['unique-column-index'] );
 		}
 
+		// check the table-id argument is set, if not, we can't do much herer
+		if ( empty( $this->args['table-id'] ) ) {
+			$this->errorMessage = 'The table-id argument is required.';
+			return;
+		}
+
 		$this->loadAndValidateHtml();
 	}
 
@@ -229,10 +235,10 @@ class ProgressTableProcessor {
 
 	/**
 	 * Sets the main data attributes on the <table> element for our JavaScript to use later
+	 * @return void [adds to the table element]
 	 */
 	private function setTableAttributes(): void {
-		// @todo: throw an error if the table-id is not set
-		$tableId = htmlspecialchars( $this->args['table-id'] ?? '0' );
+		$tableId = htmlspecialchars( $this->args['table-id'] );
 		$this->table->setAttribute( 'data-progress-table-id', $tableId );
 		$this->table->setAttribute( 'class', $this->table->getAttribute( 'class' ) . ' progress-tracking-table' );
 	}
