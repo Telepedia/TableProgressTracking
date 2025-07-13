@@ -42,7 +42,8 @@
 	},
 	"Hooks": {
 		"ParserFirstCallInit": "main",
-		"LoadExtensionSchemaUpdates": "main"
+		"LoadExtensionSchemaUpdates": "main",
+		"MultiContentSave": "main"
 	},
 	"HookHandlers": {
 		"main": {

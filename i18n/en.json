@@ -4,5 +4,6 @@
 			"Telepedia Ltd."
 		]
 	},
-    "tableprogresstracking-desc": "An extension to track progress against MediaWiki tables."
+    "tableprogresstracking-desc": "An extension to track progress against MediaWiki tables.",
+    "tableprogresstracking-duplicate-tables": "Duplicate tables found with the same table-id. The table-id must be unique across all tables."
 }
