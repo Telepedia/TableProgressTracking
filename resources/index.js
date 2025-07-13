@@ -84,10 +84,12 @@ var ProgressTracker = {
 		// first let us try local storage, if the user has visited this page previously then their data
 		// will be stored in local storage to avoid a backend trip
 		try {
-			stored = localStorage.getItem( `${this.options.storageKey} - ${this.pageId} - ${tableId}` );
+			stored = localStorage.getItem( `${this.options.storageKey}-${this.pageId}-${tableId}` );
 			if ( stored ) {
-				return JSON.parse( stored );
-			}
+            	const parsedData = JSON.parse( stored );
+            	this.progressData.set( tableId, parsedData );
+            	return Promise.resolve( parsedData );
+        	}
 		} catch ( e ) {
 			console.error( "Could not read from LocalStorage.", e );
 		}
