@@ -90,7 +90,13 @@ class ProgressTableProcessor {
 	 */
 	private function loadAndValidateHtml(): void {
 		// first parse our wikitext so we can get the HTML representation if it;
-		$tableHtml = $this->parser->recursiveTagParse( $this->wikitext, $this->frame );
+		// we use ->recursiveTagParseFully here as we need the final HTML version of the
+		// table so that we can ensure if unique-column-index is used, and the content of the 
+		// cell is a link, or any other HTML code, such as bold, then we get the right content
+		// in the data-row-id. If we use ->recursiveTagParse(), then we end up with parser strip tags
+		// such as <!--LINK'" 0:0--> and there is no easy way to get the link object from the
+		// parser that I can find.
+		$tableHtml = $this->parser->recursiveTagParseFully( $this->wikitext, $this->frame );
 
 		if ( empty( trim( $tableHtml ) ) ) {
 			$this->errorMessage = 'Parsing the wikitext resulted in empty HTML.';
