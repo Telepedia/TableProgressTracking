@@ -6,8 +6,8 @@
 	"url": "https://www.mediawiki.org/wiki/Extension:TableProgressTracking",
 	"descriptionmsg": "tableprogresstracking-desc",
 	"license-name": "Apache-2.0",
-	"type": "parser",
-	"version": "1.1.0",
+	"type": "parserhook",
+	"version": "1.0.0",
 	"requires": {
 		"MediaWiki": ">= 1.43.0"
 	},
