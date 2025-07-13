@@ -4,5 +4,6 @@
 			"Telepedia Ltd."
 		]
 	},
-    "tableprogresstracking-desc": "Description shown on Special:Version"
+    "tableprogresstracking-desc": "Description shown on Special:Version",
+    "tableprogresstracking-duplicate-tables": "Erorr message shown when more than one table with the same table-id is found."
 }

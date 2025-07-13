@@ -3,10 +3,12 @@
 namespace Telepedia\Extensions\TableProgressTracking;
 
 use Exception;
+use MediaWiki\Content\TextContent;
 use MediaWiki\Html\Html;
 use MediaWiki\Output\OutputPage;
 use MediaWiki\Parser\Parser;
 use MediaWiki\Parser\PPFrame;
+use MediaWiki\Revision\RenderedRevision;
 
 class TableGenerator {
 
@@ -52,5 +54,44 @@ class TableGenerator {
 	private static function renderError( string $message ): string {
 		$escapedMessage = htmlspecialchars( $message );
 		return Html::errorBox( $escapedMessage );
+	}
+
+	/**
+	 * Check for duplicate tables with the same table-id on a page
+	 * This doesn't really make sense in this class, but making a new class solely for that seems overkill
+	 * @return bool true if duplicates are found (and the edit should be prevented), false otherwise
+	 */
+	public static function hasDuplicateTables( RenderedRevision $revision ): bool {
+		$content = $revision->getRevision()->getContent( 'main' );
+
+		// no content, no tables, no duplicates :P
+		// if not TextContent then no tables either
+		if ( $content->isEmpty() || !$content instanceof TextContent ) {
+			return false;
+		}
+
+		$text= $content->getText();
+
+		// match all <table-progress-tracking> tags with a table-id attribute, in any order
+		preg_match_all( 
+			'/<table-progress-tracking[^>]*\btable-id\s*=\s*["\']?([^"\'>\s]+)["\']?[^>]*>/i',
+			$text,
+			$matches
+		);
+
+		if ( empty( $matches[1] ) ) {
+			return false;
+		}
+
+		$counts = array_count_values( $matches[1] );
+
+		// Return true if any table-id appears more than once
+		foreach ( $counts as $id => $count ) {
+			if ( $count > 1 ) {
+				return true;
+			}
+		}
+
+		return false;
 	}
 }

@@ -4,8 +4,9 @@ namespace Telepedia\Extensions\TableProgressTracking;
 
 use MediaWiki\Hook\ParserFirstCallInitHook;
 use MediaWiki\Installer\Hook\LoadExtensionSchemaUpdatesHook;
+use MediaWiki\Storage\Hook\MultiContentSaveHook;
 
-class Hooks implements ParserFirstCallInitHook, LoadExtensionSchemaUpdatesHook {
+class Hooks implements ParserFirstCallInitHook, LoadExtensionSchemaUpdatesHook, MultiContentSaveHook {
 	/**
 	 * @inheritDoc
 	 *
@@ -29,5 +30,15 @@ class Hooks implements ParserFirstCallInitHook, LoadExtensionSchemaUpdatesHook {
 				'table_progress_tracking',
 				"$baseDir/schema/$dbType/tables-generated.sql",
 			);
+	}
+
+	/**
+	 * @inheritDoc
+	 */
+	public function onMultiContentSave( $renderedRevision, $user, $summary, $flags, $status ) {
+		if ( TableGenerator::hasDuplicateTables( $renderedRevision ) ) {
+			$status->fatal( 'tableprogresstracking-duplicate-tables' );
+			return false;
+		}
 	}
 }
