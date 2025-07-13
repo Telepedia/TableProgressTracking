@@ -63,7 +63,10 @@ class TrackProgressHandler extends SimpleHandler {
 			);
 		}
 
-		return $this->getResponseFactory()->createNoContent();
+		$response = $this->getResponseFactory()->create();
+		$response->setStatus( 201 );
+		
+		return $response;
 	}
 
 	/**
