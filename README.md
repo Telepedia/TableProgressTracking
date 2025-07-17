@@ -1,8 +1,6 @@
 **TableProgressTracking** is a MediaWiki extension that allows users to track their progress against a certain criteria - such as whether they have earned an achievement, games played in a video game series, etc. This is done through checking off rows in a table. These are tracked and will be shown when the user next visits the page.
 
-This extension requires MediaWiki 1.43. 
-
-> Note: This extension is in active-beta and may contain issues. Please report any bugs you find.
+This extension requires MediaWiki 1.43. Usage instructions can be found on the MediaWiki article [here](https://www.mediawiki.org/wiki/Extension:TableProgressTracking).
 
 > Note: This extension may be unstable (or completely broken) on PHP 8.4 due to usage of DOMXPath.
 
