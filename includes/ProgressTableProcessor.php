@@ -226,6 +226,10 @@ class ProgressTableProcessor {
 
 		$this->processDataRows();
 
+		// if we got this far, we can assume the table is valid and ready to be returned
+		// lets add a tracking category also so we know which pages are using this extension
+		$this->parser->addTrackingCategory( 'tpt-tracking-category' );
+
 		return $this->generateFinalHtml();
 	}
 

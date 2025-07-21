@@ -5,5 +5,6 @@
 		]
 	},
     "tableprogresstracking-desc": "Description shown on Special:Version",
-    "tableprogresstracking-duplicate-tables": "Erorr message shown when more than one table with the same table-id is found."
+    "tableprogresstracking-duplicate-tables": "Erorr message shown when more than one table with the same table-id is found.",
+	"tpt-tracking-category": "Category name for pages that use progress tables, used for tracking purposes."
 }

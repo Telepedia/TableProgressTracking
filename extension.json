@@ -82,5 +82,8 @@
 	"AutoloadNamespaces": {
 		"Telepedia\\Extensions\\TableProgressTracking\\": "includes/"
 	},
+	"TrackingCategories": [
+		"tpt-tracking-category"
+	],
 	"manifest_version": 2
 }
