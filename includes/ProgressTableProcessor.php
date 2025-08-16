@@ -70,10 +70,13 @@ class ProgressTableProcessor {
 
 		// Only set the unique column index if it is provided in the arguments
 		// if not, we validate later that each row passes its own data-row-id
+		// note we must - 1 from the value the user passsed as an argument as 
+		// DOMNodeList::item() is zero-based and if the user passed 1 wanting the first column
+		// they would get the second
 		if ( isset( $this->args['unique-column-index'] ) ) {
-			$this->uniqueColumnIndex = intval( $this->args['unique-column-index'] );
+			$this->uniqueColumnIndex = intval( $this->args['unique-column-index'] ) - 1;
 		}
-
+		
 		// check the table-id argument is set, if not, we can't do much herer
 		if ( empty( $this->args['table-id'] ) ) {
 			$this->errorMessage = 'The table-id argument is required.';
