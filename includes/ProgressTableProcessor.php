@@ -129,7 +129,7 @@ class ProgressTableProcessor {
 
 		$size = strlen( $wikitext );
 		if ( $size > $this->maxInputSize ) {
-			$this->errorMessage = wfMessage( 'table-progress-tracking-max-size-limit', $size, number_format( $this->maxInputSize ) )->text();
+			$this->errorMessage = wfMessage( 'tableprogresstracking-error-wikitext-size', $size, number_format( $this->maxInputSize ) )->text();
 			return;
 		}
 
@@ -227,7 +227,6 @@ class ProgressTableProcessor {
 		$tableNode = $this->dom->getElementsByTagName( 'table' )->item( 0 );
 
 		if ( !$tableNode ) {
-			$this->parser->getOutput()->updateCacheExpiry( 0 );
 			$this->errorMessage = 'No table was provided for progress tracking. Please include a table between the <table-progress-tracking> tags.';
 			return;
 		}
@@ -258,11 +257,11 @@ class ProgressTableProcessor {
 		$processedRows = 0;
 
 		foreach ( $allRows as $row ) {
-			if ( $processedRows >= $this->maxRows || $this->checkTimeout() ) {
+			if ( $processedRows > $this->maxRows || $this->checkTimeout() ) {
 				if ( $this->checkTimeout() ) {
 					$this->errorMessage = wfMessage( 'tableprogresstracking-error-parsing-html' )->text();
-					return;
 				}
+				$this->errorMessage = wfMessage( 'tableprogresstracking-error-max-rows', $this->maxRows )->text();
 				break;
 			}
 
@@ -352,18 +351,18 @@ class ProgressTableProcessor {
 	public function process(): string {
 		// constructor may have returned an error already, so bail before we even start
 		if ( $this->hasError() ) {
-			return self::renderError( htmlspecialchars( $this->getErrorMessage() ) );
+			return $this->renderError( htmlspecialchars( $this->getErrorMessage() ) );
 		}
 
 		$this->loadAndValidateHtml();
 
 		if ( $this->hasError() ) {
-			return self::renderError( htmlspecialchars( $this->getErrorMessage() ) );
+			return $this->renderError( htmlspecialchars( $this->getErrorMessage() ) );
 		}
 
 		// If no unique-column-index is provided, validate that all rows have data-row-id
 		if ( $this->uniqueColumnIndex === null && !$this->validateDataRowIds() ) {
-			return self::renderError( htmlspecialchars( $this->getErrorMessage() ) );
+			return $this->renderError( htmlspecialchars( $this->getErrorMessage() ) );
 		}
 
 		$this->setTableAttributes();
@@ -378,7 +377,7 @@ class ProgressTableProcessor {
 
 		// let's check the erorrs again incase $this->processDataRows exited unsuccessfully
 		if ( $this->hasError() ) {
-			return self::renderError( htmlspecialchars( $this->getErrorMessage() ) );
+			return $this->renderError( htmlspecialchars( $this->getErrorMessage() ) );
 		}
 
 		// if we got this far, we can assume the table is valid and ready to be returned
@@ -558,8 +557,9 @@ class ProgressTableProcessor {
 	  * @param string $message The error message to display.
 	  * @return string
 	  */
-	private static function renderError( string $message ): string {
+	private function renderError( string $message ): string {
 		$escapedMessage = htmlspecialchars( $message );
+		$this->parser->getOutput()->updateCacheExpiry( 0 );
 		return Html::errorBox( $escapedMessage );
 	}
 
