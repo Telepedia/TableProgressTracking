@@ -7,6 +7,8 @@ use DOMElement;
 use DOMXPath;
 use Exception;
 use MediaWiki\Html\Html;
+use MediaWiki\MainConfigNames;
+use MediaWiki\MediaWikiServices;
 use MediaWiki\Parser\Parser;
 use MediaWiki\Parser\PPFrame;
 
@@ -58,6 +60,45 @@ class ProgressTableProcessor {
 	private ?string $errorMessage = null;
 
 	/**
+	 * Maximum amount of rows that will be parsed by this class before we bail
+	 * $wgTableProgressTrackingMaxRows
+	 * @var int
+	 */
+	private int $maxRows = 0;
+
+	/**
+	 * Same as above; $wgTableProgressTrackingMaxColumns
+	 * @var int
+	 */
+	private int $maxColumns = 0;
+
+	/**
+	 * Maximum size of generated HTML in bytes before we abandon parsing the table
+	 * $wgTableProgressTrackingMaxHTMLSize
+	 * @var int
+	 */
+	private int $maxHTMLSize = 0;
+
+	/**
+	 * Maximum time we will spend in seconds processing and parsing the table
+	 * $wgTableProgressTrackingMaxProcessingTime
+	 * @var int
+	 */
+	private int $maxProcessingTime = 0;
+
+	/**
+	 * Time we began processing this wikitext
+	 * @var float
+	 */
+	private float $startTime = 0.0;
+
+	/**
+	 * Maximum wikitext size we will try to parse before bailing
+	 * @var int
+	 */
+	private int $maxInputSize = 0;
+
+	/**
 	 * Constructor
 	 *
 	 * @throws Exception If the input is invalid or a table cannot be found.
@@ -67,6 +108,30 @@ class ProgressTableProcessor {
 		$this->args = $args;
 		$this->parser = $parser;
 		$this->frame = $frame;
+
+		$config = MediaWikiServices::getInstance()->getConfigFactory()->makeConfig( 'TableProgressTracking' );
+
+		$maxArticleSize = $config->get( MainConfigNames::MaxArticleSize );
+
+		$this->maxColumns = $config->get( 'TableProgressTrackingMaxColumns' );
+		$this->maxRows = $config->get( 'TableProgressTrackingMaxRows' );
+
+		// if this wasn't set, then allow us to take 25% of the max article size.
+		// in a default MediaWiki install, where $wgMaxArticleSize is unset, this will be 512KB
+		$this->maxHTMLSize = $config->get( 'TableProgressTrackingMaxHTMLSize' ) ?? ( 0.25 * $maxArticleSize );
+		$this->maxProcessingTime = $config->get( 'TableProgressTrackingMaxProcessingTime' );
+
+		// maximum bytes of wikitext we will try and parse. We will allow parsing of either 50KB by default
+		// or whatever is configured through $wgTableProcessTrackingMaxInputSize.
+		// if the wikitext exceeds this, we bail
+		$this->maxInputSize = $config->get( 'TableProgressTrackingMaxInputSize' );
+
+
+		$size = strlen( $wikitext );
+		if ( $size > $this->maxInputSize ) {
+			$this->errorMessage = wfMessage( 'table-progress-tracking-max-size-limit', $size, number_format( $this->maxInputSize ) )->text();
+			return;
+		}
 
 		// Only set the unique column index if it is provided in the arguments
 		// if not, we validate later that each row passes its own data-row-id
@@ -82,8 +147,27 @@ class ProgressTableProcessor {
 			$this->errorMessage = 'The table-id argument is required.';
 			return;
 		}
+	}
 
-		$this->loadAndValidateHtml();
+	/**
+	 * Start the timer to measure how long we have been processing this table
+	 * @return void
+	 */
+	private function startProcessingTimer(): void {
+		$this->startTime = microtime(true);
+	}
+
+	/**
+	 * Check if we've exceeded our processing time limit if we have
+	 * we will bail
+	 * @return bool
+	 */
+	private function checkTimeout(): bool {
+		if ( $this->startTime == 0.0 ) {
+			// we haven't started yet
+			return false;
+		}
+		return ( microtime( true ) - $this->startTime ) > $this->maxProcessingTime;
 	}
 
 	/**
@@ -92,6 +176,14 @@ class ProgressTableProcessor {
 	 * @throws Exception
 	 */
 	private function loadAndValidateHtml(): void {
+
+		$this->startProcessingTimer();
+
+		if ( $this->checkTimeout() ) {
+			// @TODO: wfMessage
+			$this->errorMessage = 'Processing timeout exceeded during initialisation.';
+			return;
+		}
 		// first parse our wikitext so we can get the HTML representation if it;
 		// we use ->recursiveTagParseFully here as we need the final HTML version of the
 		// table so that we can ensure if unique-column-index is used, and the content of the 
@@ -100,6 +192,18 @@ class ProgressTableProcessor {
 		// such as <!--LINK'" 0:0--> and there is no easy way to get the link object from the
 		// parser that I can find.
 		$tableHtml = $this->parser->recursiveTagParseFully( $this->wikitext, $this->frame );
+
+		if ( $this->checkTimeout() ) {
+			$this->errorMessage = wfMessage( 'tableprogresstracking-error-parsing-wikitext' )->text();
+			return;
+		}
+
+		$tableSize = strlen( $tableHtml );
+
+		if ( $tableSize > $this->maxHTMLSize ) {
+			$this->errorMessage = wfMessage( "tableprogresstracking-error-html-size", $tableSize, number_format( $this->maxHTMLSize ) );
+			return;
+		}
 
 		if ( empty( trim( $tableHtml ) ) ) {
 			$this->errorMessage = 'Parsing the wikitext resulted in empty HTML.';
@@ -114,6 +218,11 @@ class ProgressTableProcessor {
 			mb_convert_encoding( $tableHtml, 'HTML-ENTITIES', 'UTF-8' ),
 			LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD
 		);
+
+		if ( $this->checkTimeout() ) {
+			$this->errorMessage = wfMessage( 'tableprogresstracking-error-parsing-html' )->text();
+			return;
+		}
 
 		$tableNode = $this->dom->getElementsByTagName( 'table' )->item( 0 );
 
@@ -146,15 +255,30 @@ class ProgressTableProcessor {
 		$xpath = new DOMXPath( $this->dom );
 		$allRows = $xpath->query( './/tr', $this->table );
 		$maxColumns = 0;
+		$processedRows = 0;
 
 		foreach ( $allRows as $row ) {
+			if ( $processedRows >= $this->maxRows || $this->checkTimeout() ) {
+				if ( $this->checkTimeout() ) {
+					$this->errorMessage = wfMessage( 'tableprogresstracking-error-parsing-html' )->text();
+					return;
+				}
+				break;
+			}
+
 			$cellCount = $row->getElementsByTagName( 'td' )->length + $row->getElementsByTagName( 'th' )->length;
+
+			if ( $cellCount > $this->maxColumns ) {
+				$this->errorMessage = wfMessage( 'tableprogresstracking-error-max-columns', $this->maxColumns )->text();
+				return;
+			}
+
 			$maxColumns = max( $maxColumns, $cellCount );
+			$processedRows++;
 		}
 
 		if ( $this->uniqueColumnIndex >= $maxColumns ) {
 			$this->errorMessage = "unique-column-index ({$this->uniqueColumnIndex}) is out of range. Table has {$maxColumns} columns (0-" . ( $maxColumns - 1 ) . ").";
-			return;
 		}
 	}
 
@@ -162,15 +286,30 @@ class ProgressTableProcessor {
 	 * Validates that all data rows have data-row-id attributes when unique-column-index is not provided
 	 */
 	private function validateDataRowIds(): bool {
+		if ( $this->checkTimeout() ) {
+			$this->errorMessage = wfMessage( 'tableprogresstracking-error-parsing-html' )->text();
+			return false;
+		}
 		$xpath = new DOMXPath( $this->dom );
 		$dataRows = $xpath->query( './/tr[not(th)]', $this->table );
+		$processedRows = 0;
 
 		foreach ( $dataRows as $row ) {
+			if ( $processedRows >= $this->maxRows || $this->checkTimeout() ) {
+				if ( $this->checkTimeout() ) {
+					$this->errorMessage = wfMessage( 'tableprogresstracking-error-parsing-html' )->text();
+				} else {
+					$this->errorMessage = wfMessage( 'tableprogresstracking-error-max-rows' )->text();
+				}
+				return false;
+			}
+
 			$rowId = $this->extractDataRowId( $row );
 			if ( empty( $rowId ) ) {
 				$this->errorMessage = 'When unique-column-index is not provided, all data rows must have a data-row-id attribute.';
 				return false;
 			}
+			$processedRows++;
 		}
 
 		return true;
@@ -208,8 +347,16 @@ class ProgressTableProcessor {
 	 * (also modularrrr)
 	 *
 	 * @return string The final, processed HTML.
+	 * @throws Exception
 	 */
 	public function process(): string {
+		// constructor may have returned an error already, so bail before we even start
+		if ( $this->hasError() ) {
+			return self::renderError( htmlspecialchars( $this->getErrorMessage() ) );
+		}
+
+		$this->loadAndValidateHtml();
+
 		if ( $this->hasError() ) {
 			return self::renderError( htmlspecialchars( $this->getErrorMessage() ) );
 		}
@@ -228,6 +375,11 @@ class ProgressTableProcessor {
 		}
 
 		$this->processDataRows();
+
+		// let's check the erorrs again incase $this->processDataRows exited unsuccessfully
+		if ( $this->hasError() ) {
+			return self::renderError( htmlspecialchars( $this->getErrorMessage() ) );
+		}
 
 		// if we got this far, we can assume the table is valid and ready to be returned
 		// lets add a tracking category also so we know which pages are using this extension
@@ -271,6 +423,12 @@ class ProgressTableProcessor {
 	 * Iterates over all data rows (tr without th) and adds the checkbox cell to each.
 	 */
 	private function processDataRows(): void {
+
+		if ( $this->checkTimeout() ) {
+			$this->errorMessage = wfMessage( 'tableprogresstracking-error-parsing-html' )->text();
+			return;
+		}
+
 		$xpath = new DOMXPath( $this->dom );
 		// this is fucked, but this should be better than just trying to get the tr element with ->getElementByTagName('tr') as that will return all tr elements, including the header ones
 		$dataRows = $xpath->query( './/tr[not(th)]', $this->table );
