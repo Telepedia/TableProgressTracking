@@ -117,8 +117,8 @@ class ProgressTableProcessor {
 		$this->maxRows = $config->get( 'TableProgressTrackingMaxRows' );
 
 		// if this wasn't set, then allow us to take 25% of the max article size.
-		// in a default MediaWiki install, where $wgMaxArticleSize is unset, this will be 512KB
-		$this->maxHTMLSize = $config->get( 'TableProgressTrackingMaxHTMLSize' ) ?? ( 0.25 * $maxArticleSize );
+		// in a default MediaWiki install, where $wgMaxArticleSize is unset
+		$this->maxHTMLSize = $config->get( 'TableProgressTrackingMaxHTMLSize' ) ?? (int)( $maxArticleSize * 1024 * 0.25 );
 		$this->maxProcessingTime = $config->get( 'TableProgressTrackingMaxProcessingTime' );
 
 		// maximum bytes of wikitext we will try and parse. We will allow parsing of either 50KB by default
