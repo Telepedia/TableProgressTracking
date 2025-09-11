@@ -107,5 +107,8 @@
         "value": 50000
       }
     },
+    "ConfigRegistry": {
+      "TableProgressTracking": "MediaWiki\\Config\\GlobalVarConfig::newInstance"
+    },
 	"manifest_version": 2
 }
