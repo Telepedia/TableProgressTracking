@@ -72,8 +72,16 @@ class TableGenerator {
 
 		$text= $content->getText();
 
+		// For the purpose of checking whether there are duplicates, we need to ignore any instance of
+		// the parser tag which appears inside <pre>,<nowiki>, or <syntaxhighlight> tags as these will not actually
+		// be rendered by the parser.
+		// Therefore, just remove them from the text
+		$text = preg_replace( '/<syntaxhighlight\b[^>]*>.*?<\/syntaxhighlight>/is', '', $text );
+		$text = preg_replace( '/<pre\b[^>]*>.*?<\/pre>/is', '', $text );
+		$text = preg_replace( '/<nowiki\b[^>]*>.*?<\/nowiki>/is', '', $text );
+
 		// match all <table-progress-tracking> tags with a table-id attribute, in any order
-		preg_match_all( 
+		preg_match_all(
 			'/<table-progress-tracking[^>]*\btable-id\s*=\s*["\']?([^"\'>\s]+)["\']?[^>]*>/i',
 			$text,
 			$matches
