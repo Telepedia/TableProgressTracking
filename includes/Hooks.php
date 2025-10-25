@@ -40,5 +40,7 @@ class Hooks implements ParserFirstCallInitHook, LoadExtensionSchemaUpdatesHook, 
 			$status->fatal( 'tableprogresstracking-duplicate-tables' );
 			return false;
 		}
+
+		return true;
 	}
 }
