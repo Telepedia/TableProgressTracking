@@ -70,7 +70,7 @@ class TableGenerator {
 			return false;
 		}
 
-		$text= $content->getText();
+		$text = $content->getText();
 
 		// For the purpose of checking whether there are duplicates, we need to ignore any instance of
 		// the parser tag which appears inside <pre>,<nowiki>, or <syntaxhighlight> tags as these will not actually

@@ -6,7 +6,11 @@ use MediaWiki\Hook\ParserFirstCallInitHook;
 use MediaWiki\Installer\Hook\LoadExtensionSchemaUpdatesHook;
 use MediaWiki\Storage\Hook\MultiContentSaveHook;
 
-class Hooks implements ParserFirstCallInitHook, LoadExtensionSchemaUpdatesHook, MultiContentSaveHook {
+class Hooks implements
+	ParserFirstCallInitHook,
+	LoadExtensionSchemaUpdatesHook,
+	MultiContentSaveHook
+{
 	/**
 	 * @inheritDoc
 	 *
