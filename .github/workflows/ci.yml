@@ -1,0 +1,79 @@
+name: PHPUnit / PHPCS / Phan
+on:
+  pull_request:
+    branches: [ "*" ]
+
+  push:
+    branches: [ main ]
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        php_version: ['8.2']
+        mw: ['REL1_43', 'REL1_44', 'master']
+
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php_version }}
+          coverage: none
+          extensions: ast
+      - uses: actions/checkout@v3
+
+      - name: Checkout Mediawiki
+        uses: actions/checkout@v3
+        with:
+          repository: wikimedia/mediawiki
+          ref: ${{ matrix.mw }}
+
+      - name: Checkout TableProgressTracking extension
+        uses: actions/checkout@v3
+        with:
+          path: extensions/TableProgressTracking
+
+      - name: Cache TableProgressTracking composer dependencies
+        id: composer-cache
+        uses: actions/cache@v3
+        with:
+          path: vendor
+          key: ${{ runner.os }}-php-v3-${{ hashFiles('extensions/TableProgressTracking/composer.lock') }}
+
+      - name: Install TableProgresssTracking composer dependencies
+        working-directory: ./extensions/TableProgressTracking
+        run: composer install --prefer-dist --no-progress
+
+      - name: Run PHPCS and minus-x
+        working-directory: ./extensions/TableProgressTracking
+        run: composer test
+
+      - name: Run Phan static analysis
+        working-directory: ./extensions/TableProgressTracking
+        run: composer phan
+
+      - name: Start MySQL
+        run: sudo systemctl start mysql.service
+
+      - name: Install MediaWiki composer dependencies
+        run: composer update --prefer-dist --no-progress
+
+      - name: Install & configure MediaWiki
+        run: |
+          php maintenance/install.php --dbtype mysql --dbuser root --dbpass root --pass TestPassword testwiki TestAdmin
+
+          echo 'error_reporting( E_ALL | E_STRICT );' >> LocalSettings.php
+          echo 'ini_set( "display_errors", 1 );' >> LocalSettings.php
+          echo '$wgShowExceptionDetails = true;' >> LocalSettings.php
+          echo '$wgShowDBErrorBacktrace = true;' >> LocalSettings.php
+          echo '$wgDevelopmentWarnings = true;' >> LocalSettings.php
+
+          echo 'wfLoadExtension( "TableProgressTracking" );' >> LocalSettings.php
+
+      - name: Run parser tests
+        run: |
+          for file in extensions/TableProgressTracking/tests/parser/*.txt; do
+            echo "Running parser tests from $file"
+            php tests/parser/parserTests.php --file="$file"
+          done
