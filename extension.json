@@ -7,7 +7,7 @@
 	"descriptionmsg": "tableprogresstracking-desc",
 	"license-name": "Apache-2.0",
 	"type": "parserhook",
-	"version": "1.1.1",
+	"version": "1.2.0",
 	"requires": {
 		"MediaWiki": ">= 1.43.0"
 	},
@@ -85,5 +85,30 @@
 	"TrackingCategories": [
 		"tpt-tracking-category"
 	],
+    "config": {
+      "TableProgressTrackingMaxRows": {
+        "description": "Integer. Maximum amount of rows that will be parsed before returning an error.",
+        "value": 100
+      },
+      "TableProgressTrackingMaxColumns": {
+        "description": "Integer. Maximum amount of columns that will be parsed before returning an error.",
+        "value": 10
+      },
+      "TableProgressTrackingMaxHTMLSize": {
+        "description": "Integer. Parser will bail when the parsed HTML reaches this value. Set to 25% of $wgMaxArticleSize by default",
+        "value": null
+      },
+      "TableProgressTrackingMaxProcessingTime": {
+        "description": "Integer. Maximum number of seconds before the parser abandons parsing",
+        "value": 5
+      },
+      "TableProgressTrackingMaxInputSize": {
+        "description": "Integer. Maximum bytes of wikitext allowable for parsing. Default to 50KB",
+        "value": 50000
+      }
+    },
+    "ConfigRegistry": {
+      "TableProgressTracking": "MediaWiki\\Config\\GlobalVarConfig::newInstance"
+    },
 	"manifest_version": 2
 }

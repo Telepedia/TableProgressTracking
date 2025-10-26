@@ -6,5 +6,11 @@
 	},
     "tableprogresstracking-desc": "An extension to track progress against MediaWiki tables.",
     "tableprogresstracking-duplicate-tables": "Duplicate tables found with the same table-id. The table-id must be unique across all tables.",
-	"tpt-tracking-category": "Pages using progress tables"
+	"tpt-tracking-category": "Pages using progress tables",
+    "tableprogresstracking-error-wikitext-size": "Input wikitext ($1) is larger than allowed ($2)",
+    "tableprogresstracking-error-html-size": "The resultant HTML ($1) is larger than allowed ($2)",
+    "tableprogresstracking-error-parsing-wikitext": "Processing timeout exceeded during wikitext parsing",
+    "tableprogresstracking-error-parsing-html": "Processing timeout exceeded during html parsing",
+    "tableprogresstracking-error-max-columns": "Table has too many columns. Maximum of $1 allowed",
+    "tableprogresstracking-error-max-rows": "Table has too many rows. Maximum of $1 allowed"
 }
