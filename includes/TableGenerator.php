@@ -70,10 +70,10 @@ class TableGenerator {
 			return false;
 		}
 
-		$text= $content->getText();
+		$text = $content->getText();
 
 		// match all <table-progress-tracking> tags with a table-id attribute, in any order
-		preg_match_all( 
+		preg_match_all(
 			'/<table-progress-tracking[^>]*\btable-id\s*=\s*["\']?([^"\'>\s]+)["\']?[^>]*>/i',
 			$text,
 			$matches

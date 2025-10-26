@@ -9,6 +9,7 @@ use Exception;
 use MediaWiki\Html\Html;
 use MediaWiki\Parser\Parser;
 use MediaWiki\Parser\PPFrame;
+use Wikimedia\AtEase\AtEase;
 
 class ProgressTableProcessor {
 
@@ -70,13 +71,13 @@ class ProgressTableProcessor {
 
 		// Only set the unique column index if it is provided in the arguments
 		// if not, we validate later that each row passes its own data-row-id
-		// note we must - 1 from the value the user passsed as an argument as 
+		// note we must - 1 from the value the user passsed as an argument as
 		// DOMNodeList::item() is zero-based and if the user passed 1 wanting the first column
 		// they would get the second
 		if ( isset( $this->args['unique-column-index'] ) ) {
 			$this->uniqueColumnIndex = intval( $this->args['unique-column-index'] ) - 1;
 		}
-		
+
 		// check the table-id argument is set, if not, we can't do much herer
 		if ( empty( $this->args['table-id'] ) ) {
 			$this->errorMessage = 'The table-id argument is required.';
@@ -94,7 +95,7 @@ class ProgressTableProcessor {
 	private function loadAndValidateHtml(): void {
 		// first parse our wikitext so we can get the HTML representation if it;
 		// we use ->recursiveTagParseFully here as we need the final HTML version of the
-		// table so that we can ensure if unique-column-index is used, and the content of the 
+		// table so that we can ensure if unique-column-index is used, and the content of the
 		// cell is a link, or any other HTML code, such as bold, then we get the right content
 		// in the data-row-id. If we use ->recursiveTagParse(), then we end up with parser strip tags
 		// such as <!--LINK'" 0:0--> and there is no easy way to get the link object from the
@@ -110,16 +111,19 @@ class ProgressTableProcessor {
 
 		// Suppress warnings for potentially malformed HTML from wikitext.
 		// there must be a better way to do this?!! Can't find it at present, though?!>!?!
-		@$this->dom->loadHTML(
+		AtEase::suppressWarnings();
+		$this->dom->loadHTML(
 			mb_convert_encoding( $tableHtml, 'HTML-ENTITIES', 'UTF-8' ),
 			LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD
 		);
+		AtEase::restoreWarnings();
 
 		$tableNode = $this->dom->getElementsByTagName( 'table' )->item( 0 );
 
 		if ( !$tableNode ) {
 			$this->parser->getOutput()->updateCacheExpiry( 0 );
-			$this->errorMessage = 'No table was provided for progress tracking. Please include a table between the <table-progress-tracking> tags.';
+			$this->errorMessage = 'No table was provided for progress tracking.' .
+				'Please include a table between the <table-progress-tracking> tags.';
 			return;
 		}
 
@@ -133,8 +137,9 @@ class ProgressTableProcessor {
 
 	/**
 	 * Validates that the unique-column-index is within the valid range for the table
-	 * @todo there is an error here, if someone passes wikitext to the column which has the unique-column-index, it falls
-	 * back to the row index.
+	 * @todo there is an error here, if someone passes wikitext to the column which has the unique-column-index,
+	 * it causes the fallback to the row index.
+	 * @return void
 	 */
 	private function validateUniqueColumnIndex(): void {
 		if ( $this->uniqueColumnIndex < 0 ) {
@@ -153,7 +158,8 @@ class ProgressTableProcessor {
 		}
 
 		if ( $this->uniqueColumnIndex >= $maxColumns ) {
-			$this->errorMessage = "unique-column-index ({$this->uniqueColumnIndex}) is out of range. Table has {$maxColumns} columns (0-" . ( $maxColumns - 1 ) . ").";
+			$this->errorMessage = "unique-column-index ({$this->uniqueColumnIndex}) is out of range." .
+			"Table has {$maxColumns} columns (0-" . ( $maxColumns - 1 ) . ").";
 			return;
 		}
 	}
@@ -168,7 +174,8 @@ class ProgressTableProcessor {
 		foreach ( $dataRows as $row ) {
 			$rowId = $this->extractDataRowId( $row );
 			if ( empty( $rowId ) ) {
-				$this->errorMessage = 'When unique-column-index is not provided, all data rows must have a data-row-id attribute.';
+				$this->errorMessage = 'When unique-column-index is not provided, 
+				all data rows must have a data-row-id attribute.';
 				return false;
 			}
 		}
@@ -272,7 +279,8 @@ class ProgressTableProcessor {
 	 */
 	private function processDataRows(): void {
 		$xpath = new DOMXPath( $this->dom );
-		// this is fucked, but this should be better than just trying to get the tr element with ->getElementByTagName('tr') as that will return all tr elements, including the header ones
+		// this is fucked, but this should be better than just trying to get the tr element with
+		// ->getElementByTagName('tr') as that will return all tr elements, including the header ones
 		$dataRows = $xpath->query( './/tr[not(th)]', $this->table );
 		$rowIndex = 0;
 
@@ -306,8 +314,8 @@ class ProgressTableProcessor {
 		$checkBoxInput->setAttribute( 'data-row-id', $rowId );
 		$checkBoxInput->setAttribute( 'id', $rowId );
 		// disable the checkbox by default, when the JS runs, it will remove the disabled attribute.
-		// this is to ensure that no checkbox is selected before the JS initialises (or in the case of an unregistered user,
-		// the checkbox will remain disabled)
+		// this is to ensure that no checkbox is selected before the JS initialises (or in the case of an unregistered
+		// user, the checkbox will remain disabled)
 		$checkBoxInput->setAttribute( 'disabled', 'disabled' );
 
 		// empty span for the icon as per:
