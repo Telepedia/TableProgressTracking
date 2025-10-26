@@ -6,7 +6,11 @@ use MediaWiki\Hook\ParserFirstCallInitHook;
 use MediaWiki\Installer\Hook\LoadExtensionSchemaUpdatesHook;
 use MediaWiki\Storage\Hook\MultiContentSaveHook;
 
-class Hooks implements ParserFirstCallInitHook, LoadExtensionSchemaUpdatesHook, MultiContentSaveHook {
+class Hooks implements
+	ParserFirstCallInitHook,
+	LoadExtensionSchemaUpdatesHook,
+	MultiContentSaveHook
+{
 	/**
 	 * @inheritDoc
 	 *
@@ -40,5 +44,7 @@ class Hooks implements ParserFirstCallInitHook, LoadExtensionSchemaUpdatesHook, 
 			$status->fatal( 'tableprogresstracking-duplicate-tables' );
 			return false;
 		}
+
+		return true;
 	}
 }
