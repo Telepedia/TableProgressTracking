@@ -4,6 +4,7 @@ namespace Telepedia\Extensions\TableProgressTracking;
 
 use DOMDocument;
 use DOMElement;
+use DOMException;
 use DOMXPath;
 use Exception;
 use MediaWiki\Html\Html;
@@ -59,6 +60,12 @@ class ProgressTableProcessor {
 	private ?string $errorMessage = null;
 
 	/**
+	 * Row indexes that should not contain checkboxes if exclude-row-indexes is set
+	 * @var array
+	 */
+	private array $skipRows = [];
+
+	/**
 	 * Constructor
 	 *
 	 * @throws Exception If the input is invalid or a table cannot be found.
@@ -82,6 +89,17 @@ class ProgressTableProcessor {
 		if ( empty( $this->args['table-id'] ) ) {
 			$this->errorMessage = 'The table-id argument is required.';
 			return;
+		}
+
+		if ( isset( $this->args['exclude-row-indexes'] ) ) {
+			$indexes = explode( ";" , $this->args['exclude-row-indexes'] );
+
+			// DOMDocument and XPath are 0-based, therefore, as above, we need to minus 1 from each of
+			// the user-provided args to ensure we are targeting the correct row
+			$this->skipRows = array_map(
+				fn( $i ) => max( 0, intval( $i ) - 1 ),
+				$indexes
+			);
 		}
 
 		$this->loadAndValidateHtml();
@@ -291,11 +309,23 @@ class ProgressTableProcessor {
 
 	/**
 	 * Creates and adds a progress tracking checkbox cell to a single data row.
+	 *
 	 * @param DOMElement $row the row we are currently working on
 	 * @param int $rowIndex the index we are applying to the row
+	 *
 	 * @return void
+	 * @throws DOMException
 	 */
 	private function addCheckboxCellToRow( DOMElement $row, int $rowIndex ): void {
+		// user did not want a checkbox for this cell. We still need to add the <td> or else
+		// the remainder of the content is shifted left 1 place
+		if ( in_array( $rowIndex, $this->skipRows, true ) ) {
+			$emptyCell = $this->dom->createElement( 'td' );
+			$emptyCell->setAttribute( 'class', self::CHECKBOX_CELL_CLASS );
+			$row->insertBefore( $emptyCell, $row->firstChild );
+			return;
+		}
+
 		$rowId = $this->getUniqueRowId( $row, $rowIndex );
 		$row->setAttribute( 'data-row-id', $rowId );
 
