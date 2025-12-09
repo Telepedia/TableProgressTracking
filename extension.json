@@ -7,7 +7,7 @@
 	"descriptionmsg": "tableprogresstracking-desc",
 	"license-name": "Apache-2.0",
 	"type": "parserhook",
-	"version": "1.2.0",
+	"version": "1.2.1",
 	"requires": {
 		"MediaWiki": ">= 1.43.0"
 	},

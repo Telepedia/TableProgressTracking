@@ -4,11 +4,15 @@ namespace Telepedia\Extensions\TableProgressTracking\Rest;
 
 use MediaWiki\Rest\Response;
 use MediaWiki\Rest\SimpleHandler;
+use MediaWiki\Rest\TokenAwareHandlerTrait;
+use MediaWiki\Rest\Validator\Validator;
 use Telepedia\Extensions\TableProgressTracking\ProgressService;
 use Wikimedia\ParamValidator\ParamValidator;
 
 class TrackProgressHandler extends SimpleHandler {
 
+	use TokenAwareHandlerTrait;
+	
 	public function __construct(
 		private readonly ProgressService $progressService
 	) {
@@ -72,6 +76,21 @@ class TrackProgressHandler extends SimpleHandler {
 	/**
 	 * @inheritDoc
 	 */
+	public function needsWriteAccess(): bool {
+		return true;
+	}
+
+	/**
+	 * @inheritDoc
+	 */
+	public function validate( Validator $restValidator ): void {
+		parent::validate( $restValidator );
+		$this->validateToken( false );
+	}
+
+	/**
+	 * @inheritDoc
+	 */
 	public function getParamSettings() {
 		return [
 			'articleId' => [
@@ -94,6 +113,6 @@ class TrackProgressHandler extends SimpleHandler {
 				ParamValidator::PARAM_TYPE => 'string',
 				ParamValidator::PARAM_REQUIRED => true,
 			]
-		];
+		]  + $this->getTokenParamDefinition();
 	}
 }

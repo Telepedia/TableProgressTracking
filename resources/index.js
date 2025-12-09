@@ -182,11 +182,13 @@ var ProgressTracker = {
 		try {
 			if ( checkbox.checked ) {
 				await api.post( `/progress-tracking/${this.pageId}/${tableId}`, {
-					entity_id: rowId
+					entity_id: rowId,
+					token: mw.user.tokens.get( 'csrfToken' )
 				} );
 			} else {
 				await api.delete( `/progress-tracking/${this.pageId}/${tableId}`, {
-					entity_id: rowId
+					entity_id: rowId,
+					token: mw.user.tokens.get( 'csrfToken' )
 				} );
 			}
 
