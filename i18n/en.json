@@ -1,10 +1,11 @@
 {
-    "@metadata": {
-		"authors": [
-			"Telepedia Ltd."
-		]
-	},
-    "tableprogresstracking-desc": "An extension to track progress against MediaWiki tables.",
-    "tableprogresstracking-duplicate-tables": "Duplicate tables found with the same table-id. The table-id must be unique across all tables.",
-	"tpt-tracking-category": "Pages using progress tables"
+  "@metadata": {
+    "authors": [
+      "Telepedia Ltd."
+    ]
+  },
+  "tableprogresstracking-desc": "An extension to track progress against MediaWiki tables.",
+  "tableprogresstracking-duplicate-tables": "Duplicate tables found with the same table-id. The table-id must be unique across all tables.",
+  "tpt-tracking-category": "Pages using progress tables",
+  "tableprogresstracking-anon-popover": "[[Special:CreateAccount|Register]] or [[Special:UserLogin|login]] to track your progress"
 }

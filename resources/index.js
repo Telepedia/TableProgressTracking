@@ -28,6 +28,7 @@ var ProgressTracker = {
 		// bail if the user is not logged in, nothing we can do here
 		// @TODO: maybe redirect them to the sign in page instead?
 		if ( mw.user.isAnon() ) {
+            this.addPopover();
 			return;
 		}
 
@@ -221,7 +222,40 @@ var ProgressTracker = {
 		} finally {
 			table.classList.remove( this.options.classes.saving );
 		}
-	}
+	},
+
+    /**
+     * Add a popup if the user is anonymous when they hover over the checkbox encouraging them to register or
+     * login to track their progress
+     */
+    addPopover: function () {
+        const popup = new OO.ui.PopupWidget( {
+            $content: $( '<p>' + mw.message( 'tableprogresstracking-anon-popover' ).parse()  + '</p>' ),
+            padded: true,
+            head: false,
+            anchor: true,
+            autoClose: false
+        } );
+
+        $( document.body ).append( popup.$element );
+
+        const rowCheckboxes = document.querySelectorAll( this.options.selectors.checkbox );
+
+        rowCheckboxes.forEach( function ( checkbox ) {
+            // paranoia!
+            checkbox.disabled = true;
+
+            checkbox.addEventListener( 'mouseenter', function () {
+                popup.toggleAnchor( true );
+                popup.setFloatableContainer( $( checkbox ) );
+                popup.toggle( true );
+            } );
+
+            checkbox.addEventListener( 'mouseleave', function () {
+                popup.toggle( false );
+            } );
+        } );
+    }
 };
 
 
