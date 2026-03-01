@@ -26,7 +26,6 @@ var ProgressTracker = {
 		}
 
 		// bail if the user is not logged in, nothing we can do here
-		// @TODO: maybe redirect them to the sign in page instead?
 		if ( mw.user.isAnon() ) {
             this.addPopover();
 			return;
@@ -47,7 +46,7 @@ var ProgressTracker = {
 		// if we don't have IntersectionObserver (on older browsers), then return, nothing we can do
 		// at this point. Eventually will add a fallback
 		if ( !window.IntersectionObserver ) {
-			console.error( 'TableProgressTracking: IntersectionObserver is not supported. Progress tracking is unavailable.' );
+			console.error( '[TableProgressTracking]: IntersectionObserver is not supported. Progress tracking is unavailable.' );
 			return;
 		}
 
@@ -74,6 +73,12 @@ var ProgressTracker = {
 		} );
 	},
 
+	/**
+	 * Load progress, either from the browser session storage, or from the API
+	 * @TODO: use mw.log or something rather than console.error
+	 * @param tableId
+	 * @returns {*|Promise}
+	 */
 	loadTableProgress: function( tableId ) {
 		if ( this.progressData.has( tableId ) ) {
 			return Promise.resolve( this.progressData.get( tableId ) );
@@ -85,14 +90,14 @@ var ProgressTracker = {
 		// first let us try local storage, if the user has visited this page previously then their data
 		// will be stored in local storage to avoid a backend trip
 		try {
-			stored = localStorage.getItem( `${this.options.storageKey}-${this.pageId}-${tableId}` );
+			stored = sessionStorage.getItem( `${this.options.storageKey}-${this.pageId}-${tableId}` );
 			if ( stored ) {
             	const parsedData = JSON.parse( stored );
             	this.progressData.set( tableId, parsedData );
             	return Promise.resolve( parsedData );
         	}
 		} catch ( e ) {
-			console.error( "Could not read from LocalStorage.", e );
+			console.error( "[TableProgressTracking]: Could not read from SessionStorage.", e );
 		}
 
 		// we didn't have anything in the local storage, so lets make a backend request to get the data
@@ -106,9 +111,9 @@ var ProgressTracker = {
 			this.progressData.set( tableId, progress );
 
 			try {
-				localStorage.setItem( `${this.options.storageKey}-${this.pageId}-${tableId}`, JSON.stringify( progress ) );
+				sessionStorage.setItem( `${this.options.storageKey}-${this.pageId}-${tableId}`, JSON.stringify( progress ) );
 			} catch ( e ) {
-				console.error( "Could not write to LocalStorage.", e );
+				console.error( "[TableProgressTracking]: Could not write to SessionStorage.", e );
 			}
 
 			return progress;
@@ -168,7 +173,7 @@ var ProgressTracker = {
 		let checkbox = event.target;
 
 		if ( !rowId ) {
-			console.error( 'TableProgressTracking: Checkbox does not have a data-row-id attribute.' );
+			console.error( '[TableProgressTracking]: Checkbox does not have a data-row-id attribute.' );
 			return;
 		}
 
@@ -204,16 +209,16 @@ var ProgressTracker = {
 			}
 
 			try {
-				localStorage.setItem( `${this.options.storageKey}-${this.pageId}-${tableId}`, JSON.stringify( progress ) );
+				sessionStorage.setItem( `${this.options.storageKey}-${this.pageId}-${tableId}`, JSON.stringify( progress ) );
 			} catch ( e ) {
-				console.error( "TableProgressTracking: Could not write to LocalStorage.", e );
+				console.error( "[TableProgressTracking]: Could not write to SessionStorage.", e );
 			}
 
 			this.progressData.set( tableId, progress );
 			this.syncTableCheckboxes( table, tableId );
 
 		} catch ( error ) {
-			console.error( 'TableProgressTracking: Error updating progress.', error );
+			console.error( '[TableProgressTracking]: Error updating progress.', error );
 
 			// lets revert back to the orginal state
 			checkbox.checked = !originalState;

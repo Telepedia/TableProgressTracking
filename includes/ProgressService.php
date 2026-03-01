@@ -55,8 +55,6 @@ class ProgressService {
 	 * Track the progress of a user on a specific article and table.
 	 * This function handles only 1 entity at a time.
 	 *
-	 * @todo handle duplicate entries, don't return an error, just return a success status
-	 *
 	 * @param int $articleId The ID of the article.
 	 * @param int $tableId The ID of the table.
 	 * @param UserIdentity $user The user whose progress is being tracked.
@@ -76,6 +74,7 @@ class ProgressService {
 				'tpt_timestamp' => $dbw->timestamp(),
 			] )
 			->caller( __METHOD__ )
+			->ignore()
 			->execute();
 
 		if ( !$dbw->insertId() ) {
