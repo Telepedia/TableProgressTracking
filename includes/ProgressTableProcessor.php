@@ -66,6 +66,13 @@ class ProgressTableProcessor {
 	private array $skipRows = [];
 
 	/**
+	 * Whether we want to skip every Nth row, using % as the delimeter
+	 * for example, %2 would mean skip every even row (every second row)
+	 * @var int|null
+	 */
+	private ?int $skipNth = null;
+
+	/**
 	 * Constructor
 	 *
 	 * @throws Exception If the input is invalid or a table cannot be found.
@@ -92,14 +99,20 @@ class ProgressTableProcessor {
 		}
 
 		if ( isset( $this->args['exclude-row-indexes'] ) ) {
-			$indexes = explode( ";" , $this->args['exclude-row-indexes'] );
+			$val = trim( $this->args['exclude-row-indexes'] );
 
-			// DOMDocument and XPath are 0-based, therefore, as above, we need to minus 1 from each of
-			// the user-provided args to ensure we are targeting the correct row
-			$this->skipRows = array_map(
-				fn( $i ) => max( 0, intval( $i ) - 1 ),
-				$indexes
-			);
+			// lets look if we have %n and want to do an nth row skip
+			if ( preg_match( '/^%(\d+)$/', $val, $matches ) ) {
+				$this->skipNth = max( 1, intval( $matches[1] ) );
+			} else {
+				$indexes = explode( ";" , $this->args['exclude-row-indexes'] );
+				// DOMDocument and XPath are 0-based, therefore, as above, we need to minus 1 from each of
+				// the user-provided args to ensure we are targeting the correct row
+				$this->skipRows = array_map(
+					fn( $i ) => max( 0, intval( $i ) - 1 ),
+					$indexes
+				);
+			}
 		}
 
 		$this->loadAndValidateHtml();
@@ -192,7 +205,7 @@ class ProgressTableProcessor {
 		foreach ( $dataRows as $row ) {
 			$rowId = $this->extractDataRowId( $row );
 			if ( empty( $rowId ) ) {
-				$this->errorMessage = 'When unique-column-index is not provided, 
+				$this->errorMessage = 'When unique-column-index is not provided,
 				all data rows must have a data-row-id attribute.';
 				return false;
 			}
@@ -318,8 +331,12 @@ class ProgressTableProcessor {
 	 */
 	private function addCheckboxCellToRow( DOMElement $row, int $rowIndex ): void {
 		// user did not want a checkbox for this cell. We still need to add the <td> or else
-		// the remainder of the content is shifted left 1 place
-		if ( in_array( $rowIndex, $this->skipRows, true ) ) {
+		// the remainder of the content is shifted left 1 place (the user either opted not to have a checkbox by
+		// explicitly passing the row index to be skipped, or used a skipNth rule
+		$shouldSkipCheckbox = in_array( $rowIndex, $this->skipRows, true ) ||
+			( $this->skipNth !== null && ( ( $rowIndex + 1) % $this->skipNth === 0 ) );
+
+		if ( $shouldSkipCheckbox ) {
 			$emptyCell = $this->dom->createElement( 'td' );
 			$emptyCell->setAttribute( 'class', self::CHECKBOX_CELL_CLASS );
 			$row->insertBefore( $emptyCell, $row->firstChild );
