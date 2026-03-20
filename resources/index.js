@@ -152,8 +152,19 @@ var ProgressTracker = {
 				// remove the disable attribute from the checkbox so that it can be actioned
 				// this happens irrespective of whether the checkbox is checked or not
 				checkbox.disabled = false;
+
+				// if this row is tracked, change the sortable value to 1 to allow sorting
+				// (even if the table isn't sortable)
+				let sortVal = isChecked ? 1 : 0;
+				let $cell = $( checkbox ).closest( 'td' );
+
+				if ($cell.length) {
+					$cell.attr( 'data-sort-value', sortVal );
+					$cell.data( 'sortValue', sortVal );
+				}
 			}
 		}.bind( this ) );
+		$( table ).trigger('update');
 	},
 
 	/**
