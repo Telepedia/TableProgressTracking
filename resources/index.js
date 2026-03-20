@@ -158,7 +158,7 @@ var ProgressTracker = {
 				let sortVal = isChecked ? 1 : 0;
 				let $cell = $( checkbox ).closest( 'td' );
 
-				if ($cell.length) {
+				if ( $cell.length ) {
 					$cell.attr( 'data-sort-value', sortVal );
 					$cell.data( 'sortValue', sortVal );
 				}
