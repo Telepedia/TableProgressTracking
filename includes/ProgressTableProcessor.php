@@ -4,6 +4,7 @@ namespace Telepedia\Extensions\TableProgressTracking;
 
 use DOMDocument;
 use DOMElement;
+use DOMException;
 use DOMXPath;
 use Exception;
 use MediaWiki\Html\Html;
@@ -59,6 +60,15 @@ class ProgressTableProcessor {
 	private ?string $errorMessage = null;
 
 	/**
+	 * Whether the checkbox row should go on the left (first column) or the right
+	 * (last column). Accepted values are "last" or anything else which will default to first
+	 * (hence the 'first' here actually does nothing)
+	 * @TODO: maybe we need to automatically decide this from rtl lang also
+	 * @var string
+	 */
+	private string $checkboxLocation = 'first';
+
+	/**
 	 * Constructor
 	 *
 	 * @throws Exception If the input is invalid or a table cannot be found.
@@ -84,6 +94,10 @@ class ProgressTableProcessor {
 			return;
 		}
 
+		if ( isset( $this->args['location'] ) ) {
+			// maybe don't need htmlspecialchars here but paranoia
+			$this->checkboxLocation = htmlspecialchars( $this->args['location'] );
+		}
 		$this->loadAndValidateHtml();
 	}
 
@@ -270,7 +284,11 @@ class ProgressTableProcessor {
 
 			$progressHeader->appendChild( $headerDiv );
 
-			$headerRow->insertBefore( $progressHeader, $headerRow->firstChild );
+			if ( $this->checkboxLocation === 'last' ) {
+				$headerRow->appendChild( $progressHeader );
+			} else {
+				$headerRow->insertBefore( $progressHeader, $headerRow->firstChild );
+			}
 		}
 	}
 
@@ -291,9 +309,12 @@ class ProgressTableProcessor {
 
 	/**
 	 * Creates and adds a progress tracking checkbox cell to a single data row.
+	 *
 	 * @param DOMElement $row the row we are currently working on
 	 * @param int $rowIndex the index we are applying to the row
+	 *
 	 * @return void
+	 * @throws DOMException
 	 */
 	private function addCheckboxCellToRow( DOMElement $row, int $rowIndex ): void {
 		$rowId = $this->getUniqueRowId( $row, $rowIndex );
@@ -313,6 +334,7 @@ class ProgressTableProcessor {
 		$checkBoxInput->setAttribute( 'class', 'cdx-checkbox__input' );
 		$checkBoxInput->setAttribute( 'data-row-id', $rowId );
 		$checkBoxInput->setAttribute( 'id', $rowId );
+
 		// disable the checkbox by default, when the JS runs, it will remove the disabled attribute.
 		// this is to ensure that no checkbox is selected before the JS initialises (or in the case of an unregistered
 		// user, the checkbox will remain disabled)
@@ -353,7 +375,11 @@ class ProgressTableProcessor {
 		$cell->setAttribute( 'data-sort-value', 0 );
 		$cell->appendChild( $checkboxDiv );
 
-		$row->insertBefore( $cell, $row->firstChild );
+		if ( $this->checkboxLocation === 'last' ) {
+			$row->appendChild( $cell );
+		} else {
+			$row->insertBefore( $cell, $row->firstChild );
+		}
 	}
 
 	/**
