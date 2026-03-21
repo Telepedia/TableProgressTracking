@@ -73,6 +73,18 @@ class ProgressTableProcessor {
 	private ?int $skipNth = null;
 
 	/**
+	 * Should we skip all rows after a certain index?
+	 * @var ?int
+	 */
+	private ?int $skipAfter = null;
+
+	/**
+	 * Should we skip all rows before a certain index?
+	 * @var ?int
+	 */
+	private ?int $skipBefore = null;
+
+	/**
 	 * Constructor
 	 *
 	 * @throws Exception If the input is invalid or a table cannot be found.
@@ -104,6 +116,10 @@ class ProgressTableProcessor {
 			// lets look if we have %n and want to do an nth row skip
 			if ( preg_match( '/^%(\d+)$/', $val, $matches ) ) {
 				$this->skipNth = max( 1, intval( $matches[1] ) );
+			} elseif ( preg_match( '/^gt(\d+)$/', $val, $matches ) ) {
+				$this->skipAfter = max( 1, intval( $matches[1] ) );
+			} elseif ( preg_match( '/^lt(\d+)$/', $val, $matches ) ) {
+				$this->skipBefore = max( 1, intval( $matches[1] ) );
 			} else {
 				$indexes = explode( ";" , $this->args['exclude-row-indexes'] );
 				// DOMDocument and XPath are 0-based, therefore, as above, we need to minus 1 from each of
@@ -334,7 +350,9 @@ class ProgressTableProcessor {
 		// the remainder of the content is shifted left 1 place (the user either opted not to have a checkbox by
 		// explicitly passing the row index to be skipped, or used a skipNth rule
 		$shouldSkipCheckbox = in_array( $rowIndex, $this->skipRows, true ) ||
-			( $this->skipNth !== null && ( ( $rowIndex + 1) % $this->skipNth === 0 ) );
+			( $this->skipNth !== null && ( ( $rowIndex + 1) % $this->skipNth === 0 ) ) ||
+			( $this->skipAfter !== null && ( ( $rowIndex + 1) > $this->skipAfter ) ) ||
+			( $this->skipBefore !== null && ( ( $rowIndex + 1) < $this->skipBefore ) );
 
 		if ( $shouldSkipCheckbox ) {
 			$emptyCell = $this->dom->createElement( 'td' );
