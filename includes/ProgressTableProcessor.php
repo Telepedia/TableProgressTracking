@@ -413,6 +413,9 @@ class ProgressTableProcessor {
 
 		$cell = $this->dom->createElement( 'td' );
 		$cell->setAttribute( 'class', self::CHECKBOX_CELL_CLASS );
+		// set the initial sortable value to 0 (does nothing if the table isn't sortable)
+		// when the JS runs, it will change this to 1 for tracked cells
+		$cell->setAttribute( 'data-sort-value', 0 );
 		$cell->appendChild( $checkboxDiv );
 
 		$row->insertBefore( $cell, $row->firstChild );
