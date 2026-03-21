@@ -67,6 +67,8 @@ class ProgressTableProcessor {
 	 * @var string
 	 */
 	private string $checkboxLocation = 'first';
+	
+	/**
 	 * Row indexes that should not contain checkboxes if exclude-row-indexes is set
 	 * @var array
 	 */
