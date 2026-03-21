@@ -60,6 +60,13 @@ class ProgressTableProcessor {
 	private ?string $errorMessage = null;
 
 	/**
+	 * Whether the checkbox row should go on the left (first column) or the right
+	 * (last column). Accepted values are "last" or anything else which will default to first
+	 * (hence the 'first' here actually does nothing)
+	 * @TODO: maybe we need to automatically decide this from rtl lang also
+	 * @var string
+	 */
+	private string $checkboxLocation = 'first';
 	 * Row indexes that should not contain checkboxes if exclude-row-indexes is set
 	 * @var array
 	 */
@@ -110,6 +117,11 @@ class ProgressTableProcessor {
 			return;
 		}
 
+		if ( isset( $this->args['location'] ) ) {
+			// maybe don't need htmlspecialchars here but paranoia
+			$this->checkboxLocation = htmlspecialchars( $this->args['location'] );
+		}
+  
 		if ( isset( $this->args['exclude-row-indexes'] ) ) {
 			$val = trim( $this->args['exclude-row-indexes'] );
 
@@ -317,7 +329,11 @@ class ProgressTableProcessor {
 
 			$progressHeader->appendChild( $headerDiv );
 
-			$headerRow->insertBefore( $progressHeader, $headerRow->firstChild );
+			if ( $this->checkboxLocation === 'last' ) {
+				$headerRow->appendChild( $progressHeader );
+			} else {
+				$headerRow->insertBefore( $progressHeader, $headerRow->firstChild );
+			}
 		}
 	}
 
@@ -378,6 +394,7 @@ class ProgressTableProcessor {
 		$checkBoxInput->setAttribute( 'class', 'cdx-checkbox__input' );
 		$checkBoxInput->setAttribute( 'data-row-id', $rowId );
 		$checkBoxInput->setAttribute( 'id', $rowId );
+
 		// disable the checkbox by default, when the JS runs, it will remove the disabled attribute.
 		// this is to ensure that no checkbox is selected before the JS initialises (or in the case of an unregistered
 		// user, the checkbox will remain disabled)
@@ -418,7 +435,11 @@ class ProgressTableProcessor {
 		$cell->setAttribute( 'data-sort-value', 0 );
 		$cell->appendChild( $checkboxDiv );
 
-		$row->insertBefore( $cell, $row->firstChild );
+		if ( $this->checkboxLocation === 'last' ) {
+			$row->appendChild( $cell );
+		} else {
+			$row->insertBefore( $cell, $row->firstChild );
+		}
 	}
 
 	/**
