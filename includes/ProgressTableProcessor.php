@@ -4,6 +4,7 @@ namespace Telepedia\Extensions\TableProgressTracking;
 
 use DOMDocument;
 use DOMElement;
+use DOMException;
 use DOMXPath;
 use Exception;
 use MediaWiki\Html\Html;
@@ -59,6 +60,31 @@ class ProgressTableProcessor {
 	private ?string $errorMessage = null;
 
 	/**
+	 * Row indexes that should not contain checkboxes if exclude-row-indexes is set
+	 * @var array
+	 */
+	private array $skipRows = [];
+
+	/**
+	 * Whether we want to skip every Nth row, using % as the delimeter
+	 * for example, %2 would mean skip every even row (every second row)
+	 * @var int|null
+	 */
+	private ?int $skipNth = null;
+
+	/**
+	 * Should we skip all rows after a certain index?
+	 * @var ?int
+	 */
+	private ?int $skipAfter = null;
+
+	/**
+	 * Should we skip all rows before a certain index?
+	 * @var ?int
+	 */
+	private ?int $skipBefore = null;
+
+	/**
 	 * Constructor
 	 *
 	 * @throws Exception If the input is invalid or a table cannot be found.
@@ -82,6 +108,27 @@ class ProgressTableProcessor {
 		if ( empty( $this->args['table-id'] ) ) {
 			$this->errorMessage = 'The table-id argument is required.';
 			return;
+		}
+
+		if ( isset( $this->args['exclude-row-indexes'] ) ) {
+			$val = trim( $this->args['exclude-row-indexes'] );
+
+			// lets look if we have %n and want to do an nth row skip
+			if ( preg_match( '/^%(\d+)$/', $val, $matches ) ) {
+				$this->skipNth = max( 1, intval( $matches[1] ) );
+			} elseif ( preg_match( '/^gt(\d+)$/', $val, $matches ) ) {
+				$this->skipAfter = max( 1, intval( $matches[1] ) );
+			} elseif ( preg_match( '/^lt(\d+)$/', $val, $matches ) ) {
+				$this->skipBefore = max( 1, intval( $matches[1] ) );
+			} else {
+				$indexes = explode( ";" , $this->args['exclude-row-indexes'] );
+				// DOMDocument and XPath are 0-based, therefore, as above, we need to minus 1 from each of
+				// the user-provided args to ensure we are targeting the correct row
+				$this->skipRows = array_map(
+					fn( $i ) => max( 0, intval( $i ) - 1 ),
+					$indexes
+				);
+			}
 		}
 
 		$this->loadAndValidateHtml();
@@ -174,7 +221,7 @@ class ProgressTableProcessor {
 		foreach ( $dataRows as $row ) {
 			$rowId = $this->extractDataRowId( $row );
 			if ( empty( $rowId ) ) {
-				$this->errorMessage = 'When unique-column-index is not provided, 
+				$this->errorMessage = 'When unique-column-index is not provided,
 				all data rows must have a data-row-id attribute.';
 				return false;
 			}
@@ -291,11 +338,29 @@ class ProgressTableProcessor {
 
 	/**
 	 * Creates and adds a progress tracking checkbox cell to a single data row.
+	 *
 	 * @param DOMElement $row the row we are currently working on
 	 * @param int $rowIndex the index we are applying to the row
+	 *
 	 * @return void
+	 * @throws DOMException
 	 */
 	private function addCheckboxCellToRow( DOMElement $row, int $rowIndex ): void {
+		// user did not want a checkbox for this cell. We still need to add the <td> or else
+		// the remainder of the content is shifted left 1 place (the user either opted not to have a checkbox by
+		// explicitly passing the row index to be skipped, or used a skipNth rule
+		$shouldSkipCheckbox = in_array( $rowIndex, $this->skipRows, true ) ||
+			( $this->skipNth !== null && ( ( $rowIndex + 1) % $this->skipNth === 0 ) ) ||
+			( $this->skipAfter !== null && ( ( $rowIndex + 1) > $this->skipAfter ) ) ||
+			( $this->skipBefore !== null && ( ( $rowIndex + 1) < $this->skipBefore ) );
+
+		if ( $shouldSkipCheckbox ) {
+			$emptyCell = $this->dom->createElement( 'td' );
+			$emptyCell->setAttribute( 'class', self::CHECKBOX_CELL_CLASS );
+			$row->insertBefore( $emptyCell, $row->firstChild );
+			return;
+		}
+
 		$rowId = $this->getUniqueRowId( $row, $rowIndex );
 		$row->setAttribute( 'data-row-id', $rowId );
 
