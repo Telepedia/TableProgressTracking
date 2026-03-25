@@ -67,7 +67,7 @@ class ProgressTableProcessor {
 	 * @var string
 	 */
 	private string $checkboxLocation = 'first';
-	
+
 	/**
 	 * Row indexes that should not contain checkboxes if exclude-row-indexes is set
 	 * @var array
@@ -123,7 +123,7 @@ class ProgressTableProcessor {
 			// maybe don't need htmlspecialchars here but paranoia
 			$this->checkboxLocation = htmlspecialchars( $this->args['location'] );
 		}
-  
+
 		if ( isset( $this->args['exclude-row-indexes'] ) ) {
 			$val = trim( $this->args['exclude-row-indexes'] );
 
@@ -518,7 +518,11 @@ class ProgressTableProcessor {
 			$progressHeader = $this->dom->createElement( 'th' );
 			$progressHeader->textContent = htmlspecialchars( $headerLabel );
 
-			$headerRow->insertBefore( $progressHeader, $headerRow->firstChild );
+			if ( $this->checkboxLocation === 'last' ) {
+				$headerRow->appendChild( $progressHeader );
+			} else {
+				$headerRow->insertBefore( $progressHeader, $headerRow->firstChild );
+			}
 		}
 	}
 
