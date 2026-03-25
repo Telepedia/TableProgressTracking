@@ -375,7 +375,11 @@ class ProgressTableProcessor {
 		if ( $shouldSkipCheckbox ) {
 			$emptyCell = $this->dom->createElement( 'td' );
 			$emptyCell->setAttribute( 'class', self::CHECKBOX_CELL_CLASS );
-			$row->insertBefore( $emptyCell, $row->firstChild );
+			if ( $this->checkboxLocation === 'last' ) {
+				$row->appendChild( $emptyCell );
+			} else {
+				$row->insertBefore( $emptyCell, $row->firstChild );
+			}
 			return;
 		}
 
