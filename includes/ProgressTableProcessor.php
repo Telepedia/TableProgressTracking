@@ -495,7 +495,6 @@ class ProgressTableProcessor {
 	  * (here in a separate function incase we want to wrap the table in a container or something later)
 	  */
 	private function generateFinalHtml(): string {
-		$this->trimWhitespaceNodes();
 		return trim( $this->dom->saveHTML( $this->table ) );
 	}
 
@@ -547,37 +546,4 @@ class ProgressTableProcessor {
 	public function getErrorMessage(): ?string {
 		return $this->errorMessage;
 	}
-
-	/**
-	 * Remove whitespace-only text nodes from structural table elements.
-	 * MediaWiki reparses extension HTML later, and stray whitespace nodes in table structure
-	 * can be reparented outside the table into blank paragraphs. This is most prevalant when using DPL4, which
-	 * emits <td>\n</td> instead of <td></td>. For some reason the parser kicks these out of the table if they appear
-	 * at the beginning of the table (such as when using location=last) causing line breaks
-	 * @return void [modifies return of ->recursiveTagParse()]
-	 */
-	private function trimWhitespaceNodes(): void {
-		$xpath = new DOMXPath( $this->dom );
-		// I don't like this but best we got (need to see how much this costs performance wise)
-		$textNodes = $xpath->query(
-			'.//text()[normalize-space(.) = "" and ' .
-			'( parent::table or parent::thead or parent::tbody or parent::tfoot or parent::tr )]',
-			$this->table
-		);
-
-		// nought to be done
-		if ( !$textNodes ) {
-			return;
-		}
-
-		$nodesToRemove = [];
-		foreach ( $textNodes as $node ) {
-			$nodesToRemove[] = $node;
-		}
-
-		foreach ( $nodesToRemove as $node ) {
-			$node->parentNode?->removeChild( $node );
-		}
-	}
-
 }
