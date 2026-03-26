@@ -230,8 +230,7 @@ class ProgressTableProcessor {
 	 * Validates that all data rows have data-row-id attributes when unique-column-index is not provided
 	 */
 	private function validateDataRowIds(): bool {
-		$xpath = new DOMXPath( $this->dom );
-		$dataRows = $xpath->query( './/tr[not(th)]', $this->table );
+		$dataRows = $this->getDataRows();
 
 		foreach ( $dataRows as $row ) {
 			$rowId = $this->extractDataRowId( $row );
@@ -258,7 +257,7 @@ class ProgressTableProcessor {
 
 		// Check cells for data-row-id (using the last one found)
 		// this allows us to handle the case where a user passes a data-row-id on more than one column
-		$cells = $row->getElementsByTagName( 'td' );
+		$cells = $this->getRowCells( $row );
 		$lastRowId = null;
 
 		foreach ( $cells as $cell ) {
@@ -341,13 +340,10 @@ class ProgressTableProcessor {
 	}
 
 	/**
-	 * Iterates over all data rows (tr without th) and adds the checkbox cell to each.
+	 * Iterates over all data rows and adds the checkbox cell to each.
 	 */
 	private function processDataRows(): void {
-		$xpath = new DOMXPath( $this->dom );
-		// this is fucked, but this should be better than just trying to get the tr element with
-		// ->getElementByTagName('tr') as that will return all tr elements, including the header ones
-		$dataRows = $xpath->query( './/tr[not(th)]', $this->table );
+		$dataRows = $this->getDataRows();
 		$rowIndex = 0;
 
 		foreach ( $dataRows as $r ) {
@@ -465,9 +461,9 @@ class ProgressTableProcessor {
 
 		// Wasn't found, use the unique-column-index if it is set
 		if ( $this->uniqueColumnIndex !== null ) {
-			$tdElements = $row->getElementsByTagName( 'td' );
-			if ( $tdElements->length > $this->uniqueColumnIndex ) {
-				$uniqueCell = $tdElements->item( $this->uniqueColumnIndex );
+			$rowCells = $this->getRowCells( $row );
+			if ( count( $rowCells ) > $this->uniqueColumnIndex ) {
+				$uniqueCell = $rowCells[$this->uniqueColumnIndex];
 				if ( $uniqueCell ) {
 					$rowIdContent = trim( $uniqueCell->textContent );
 					if ( !empty( $rowIdContent ) ) {
@@ -545,5 +541,34 @@ class ProgressTableProcessor {
 	 */
 	public function getErrorMessage(): ?string {
 		return $this->errorMessage;
+	}
+
+	/**
+	 * Get the cell elements from a row including the headers
+	 * @param DOMElement $row
+	 * @return array
+	 */
+	private function getRowCells( DOMElement $row ): array {
+		$cells = [];
+
+		foreach ( $row->childNodes as $child ) {
+			if (
+				$child instanceof DOMElement &&
+				( $child->tagName === 'th' || $child->tagName === 'td' )
+			) {
+				$cells[] = $child;
+			}
+		}
+
+		return $cells;
+	}
+
+	/**
+	 * Returns all the rows which we consider to hold "data"
+	 * @return iterable
+	 */
+	private function getDataRows(): iterable {
+		$xpath = new DOMXPath( $this->dom );
+		return $xpath->query( './/tr[td]', $this->table );
 	}
 }
