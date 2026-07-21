@@ -253,21 +253,22 @@ var ProgressTracker = {
             autoClose: false
         } );
 
-        $( document.body ).append( popup.$element );
-
         const rowCheckboxes = document.querySelectorAll( this.options.selectors.checkbox );
 
         rowCheckboxes.forEach( function ( checkbox ) {
             // paranoia!
             checkbox.disabled = true;
 
-            checkbox.addEventListener( 'mouseenter', function () {
+            const container = checkbox.closest( '.cdx-checkbox' ) || checkbox.parentNode;
+
+            container.addEventListener( 'mouseenter', function () {
+                container.appendChild( popup.$element[ 0 ] );
                 popup.toggleAnchor( true );
                 popup.setFloatableContainer( $( checkbox ) );
                 popup.toggle( true );
             } );
 
-            checkbox.addEventListener( 'mouseleave', function () {
+            container.addEventListener( 'mouseleave', function () {
                 popup.toggle( false );
             } );
         } );
