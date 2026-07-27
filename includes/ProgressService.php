@@ -77,7 +77,10 @@ class ProgressService {
 			->ignore()
 			->execute();
 
-		if ( !$dbw->insertId() ) {
+		if (
+			$dbw->affectedRows() === 0 &&
+			!$this->progressExists( $articleId, $tableId, $user, $entityId )
+		) {
 			$this->logger->error(
 				'Failed to track progress for user {user} on article {article} and table {table} with entity {entity}.',
 				[
@@ -90,6 +93,29 @@ class ProgressService {
 		}
 
 		return StatusValue::newGood();
+	}
+
+	/**
+	 * Check whether a progress row already exists.
+	 * @param int $articleId
+	 * @param int $tableId
+	 * @param UserIdentity $user,
+	 * @param mixed $entityId
+	 */
+	private function progressExists( int $articleId, int $tableId, UserIdentity $user, mixed $entityId ): bool {
+		$dbr = $this->connectionProvider->getPrimaryDatabase();
+
+		return (bool)$dbr->newSelectQueryBuilder()
+			->select( '1' )
+			->from( 'table_progress_tracking' )
+			->where( [
+				'page_id' => $articleId,
+				'table_id' => $tableId,
+				'user_id' => $user->getId(),
+				'entity_id' => $entityId,
+			] )
+			->caller( __METHOD__ )
+			->fetchField();
 	}
 
 	/**
@@ -114,18 +140,6 @@ class ProgressService {
 			] )
 			->caller( __METHOD__ )
 			->execute();
-
-		if ( $dbw->affectedRows() === 0 ) {
-			$this->logger->error(
-				'Failed to delete progress; user: {user},  article: {article}, table: {table}, entity: {entity}.',
-				[
-					'user' => $user->getName(),
-					'article' => $articleId,
-					'table' => $tableId,
-					'entity' => $entityId,
-				] );
-			return StatusValue::newFatal( 'An error occured. Please try again later.' );
-		}
 
 		return StatusValue::newGood();
 	}
