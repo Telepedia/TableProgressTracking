@@ -124,6 +124,51 @@ var ProgressTracker = {
 		}.bind( this ) );
 	},
 
+	getStoredProgress: function ( tableId ) {
+		let progress = this.progressData.get( tableId );
+
+		if ( progress ) {
+			return progress.slice();
+		}
+
+		try {
+			const stored = sessionStorage.getItem( `${this.options.storageKey}-${this.pageId}-${tableId}` );
+			if ( stored ) {
+				return JSON.parse( stored );
+			}
+		} catch ( e ) {
+			console.error( "[TableProgressTracking]: Could not read from SessionStorage.", e );
+		}
+
+		return [];
+	},
+
+	saveProgress: function ( tableId, progress ) {
+		this.progressData.set( tableId, progress );
+
+		try {
+			sessionStorage.setItem( `${this.options.storageKey}-${this.pageId}-${tableId}`, JSON.stringify( progress ) );
+		} catch ( e ) {
+			console.error( "[TableProgressTracking]: Could not write to SessionStorage.", e );
+		}
+	},
+
+	updateProgressForRow: function ( tableId, rowId, isChecked ) {
+		let progress = this.getStoredProgress( tableId );
+
+		if ( isChecked ) {
+			if ( !progress.includes( rowId ) ) {
+				progress.push( rowId );
+			}
+		} else {
+			progress = progress.filter( id => id !== rowId );
+		}
+
+		this.saveProgress( tableId, progress );
+
+		return progress;
+	},
+
 	setupEventListeners: function() {
 		const tables = document.querySelectorAll( this.options.selectors.table );
 
@@ -188,8 +233,7 @@ var ProgressTracker = {
 			return;
 		}
 
-		// if the http request fails, we need to revert the checkbox to its original state
-		const originalState = checkbox.checked;
+		const requestedState = checkbox.checked;
 
 		let table = checkbox.closest( 'table' );
 		table.classList.add( this.options.classes.saving );
@@ -197,7 +241,7 @@ var ProgressTracker = {
 		const api = new mw.Rest();
 
 		try {
-			if ( checkbox.checked ) {
+			if ( requestedState ) {
 				await api.post( `/progress-tracking/${this.pageId}/${tableId}`, {
 					entity_id: rowId,
 					token: mw.user.tokens.get( 'csrfToken' )
@@ -209,30 +253,14 @@ var ProgressTracker = {
 				} );
 			}
 
-			let progress = this.progressData.get( tableId ) || [];
-
-			if ( checkbox.checked ) {
-				if ( !progress.includes( rowId ) ) {
-					progress.push( rowId );
-				}
-			} else {
-				progress = progress.filter( id => id !== rowId );
-			}
-
-			try {
-				sessionStorage.setItem( `${this.options.storageKey}-${this.pageId}-${tableId}`, JSON.stringify( progress ) );
-			} catch ( e ) {
-				console.error( "[TableProgressTracking]: Could not write to SessionStorage.", e );
-			}
-
-			this.progressData.set( tableId, progress );
+			this.updateProgressForRow( tableId, rowId, requestedState );
 			this.syncTableCheckboxes( table, tableId );
 
 		} catch ( error ) {
 			console.error( '[TableProgressTracking]: Error updating progress.', error );
 
 			// lets revert back to the orginal state
-			checkbox.checked = !originalState;
+			checkbox.checked = !requestedState;
 
 			table.classList.add( this.options.classes.error );
 		} finally {
