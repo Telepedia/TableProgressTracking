@@ -25,3 +25,14 @@ td.progress-tracker-checkbox-cell:has(input[type="checkbox"]:checked) {
 	width: max-content;
 	display: flex;
 }
+
+.progress-tracker-checkbox-cell .oo-ui-popupWidget {
+	// Increase from the default of 1 so that another checkbox doesn't take over the current popup when both
+	// are hovered.
+	z-index: 2;
+
+	// Remove the skin's default margins.
+	p {
+		margin: 0;
+	}
+}
