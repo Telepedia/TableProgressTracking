@@ -26,9 +26,9 @@ class TrackProgressHandler extends SimpleHandler {
 	 * @return Response
 	 */
 	public function run( int $articleId, int $tableId ): Response {
-		$user = $this->getAuthority()->getUser();
+		$authority = $this->getAuthority();
 
-		if ( !$user->isRegistered() ) {
+		if ( !$authority->isNamed() ) {
 			return $this->getResponseFactory()->createHttpError(
 				403,
 				[
@@ -54,7 +54,7 @@ class TrackProgressHandler extends SimpleHandler {
 		$res = $this->progressService->trackProgress(
 			$articleId,
 			$tableId,
-			$user,
+			$authority->getUser(),
 			$entityId
 		);
 

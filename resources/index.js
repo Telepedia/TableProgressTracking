@@ -26,7 +26,7 @@ var ProgressTracker = {
 		}
 
 		// bail if the user is not logged in, nothing we can do here
-		if ( mw.user.isAnon() ) {
+		if ( !mw.user.isNamed() ) {
             this.addPopover();
 			return;
 		}
