@@ -22,9 +22,9 @@ class GetProgressHandler extends SimpleHandler {
 	 * @return Response (array containing either the entities, or empty for none)
 	 */
 	public function run( int $articleId, int $tableId ): Response {
-		$user = $this->getAuthority()->getUser();
+		$authority = $this->getAuthority();
 
-		if ( !$user->isRegistered() ) {
+		if ( !$authority->isNamed() ) {
 			return $this->getResponseFactory()->createHttpError(
 				403,
 				[
@@ -33,7 +33,7 @@ class GetProgressHandler extends SimpleHandler {
 			);
 		}
 
-		$res = $this->progressService->getProgress( $articleId, $tableId, $user );
+		$res = $this->progressService->getProgress( $articleId, $tableId, $authority->getUser() );
 
 		return $this->getResponseFactory()->createJson( $res );
 	}
